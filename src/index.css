@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Noto Sans JP', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+}
+
+@layer components {
+  .status-button {
+    @apply min-h-touch min-w-touch flex items-center justify-center rounded-lg transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .status-present {
+    @apply bg-primary-100 text-primary-700 border-2 border-primary-200 hover:bg-primary-200;
+  }
+  
+  .status-absent {
+    @apply bg-danger-100 text-danger-700 border-2 border-danger-200 hover:bg-danger-200;
+  }
+  
+  .status-unknown {
+    @apply bg-gray-100 text-gray-600 border-2 border-gray-200 hover:bg-gray-200;
+  }
+  
+  .week-navigation {
+    @apply flex items-center justify-between bg-white rounded-lg shadow-sm p-4 mb-6;
+  }
+  
+  .nav-button {
+    @apply min-h-touch min-w-touch flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors duration-200 active:scale-95 disabled:opacity-50;
+  }
+  
+  .calendar-grid {
+    @apply bg-white rounded-lg shadow-sm overflow-hidden;
+  }
+  
+  .calendar-header {
+    @apply grid grid-cols-8 bg-gray-50 border-b border-gray-200;
+  }
+  
+  .calendar-body {
+    @apply divide-y divide-gray-200;
+  }
+  
+  .member-row {
+    @apply grid grid-cols-8 hover:bg-gray-50 transition-colors duration-150;
+  }
+  
+  .member-name {
+    @apply p-4 font-medium text-gray-900 bg-gray-50 border-r border-gray-200 flex items-center;
+  }
+  
+  .day-cell {
+    @apply p-2 flex items-center justify-center border-r border-gray-200 last:border-r-0;
+  }
+  
+  .summary-card {
+    @apply bg-white rounded-lg shadow-sm p-4 mt-6;
+  }
+}
+
+@layer utilities {
+  .touch-target {
+    @apply min-h-touch min-w-touch;
+  }
+} 
