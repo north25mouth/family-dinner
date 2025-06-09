@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   FamilyMember, 
   AttendanceStatus, 
   WeeklyAttendance, 
-  AttendanceRecord, 
   Note, 
-  NotificationSettings as NotificationSettingsType,
-  FamilySettings 
+  NotificationSettings as NotificationSettingsType
 } from './types';
 import { WeekNavigation } from './components/WeekNavigation';
 import { WeeklyCalendar } from './components/WeeklyCalendar';
@@ -14,6 +12,7 @@ import { DailySummary } from './components/DailySummary';
 import { MemberManagement } from './components/MemberManagement';
 import { NoteModal } from './components/NoteModal';
 import { NotificationSettings } from './components/NotificationSettings';
+import { ConnectionStatus } from './components/ConnectionStatus';
 import { AuthComponent } from './components/AuthComponent';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from './config/firebase';
@@ -21,15 +20,7 @@ import { firestoreService } from './services/firestoreService';
 import { getPreviousWeek, getNextWeek, formatDate } from './utils/dateUtils';
 import { notificationService } from './services/notificationService';
 import toast, { Toaster } from 'react-hot-toast';
-import { Users, MessageSquare, Bell, Settings, Wifi, WifiOff } from 'lucide-react';
-
-// デモデータ
-const defaultMembers: FamilyMember[] = [
-  { id: '1', name: 'お父さん', color: '#3B82F6', order: 1 },
-  { id: '2', name: 'お母さん', color: '#EF4444', order: 2 },
-  { id: '3', name: '太郎', color: '#10B981', order: 3 },
-  { id: '4', name: '花子', color: '#F59E0B', order: 4 },
-];
+import { Users, MessageSquare, Bell } from 'lucide-react';
 
 const defaultNotificationSettings: NotificationSettingsType = {
   enabled: false,
@@ -46,25 +37,15 @@ function App() {
   // データ状態
   const [currentDate, setCurrentDate] = useState(new Date());
   const [members, setMembers] = useState<FamilyMember[]>([]);
-  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
+  const [attendance, setAttendance] = useState<WeeklyAttendance>({});
   const [notes, setNotes] = useState<Note[]>([]);
-  const [notificationSettings, setNotificationSettings] = useState<NotificationSettingsType>(defaultNotificationSettings);
+  const [notifications, setNotifications] = useState<NotificationSettingsType>(defaultNotificationSettings);
   
   // UI状態
-  const [showMemberManagement, setShowMemberManagement] = useState(false);
+  const [currentTab, setCurrentTab] = useState<'calendar' | 'members' | 'notifications'>('calendar');
   const [showNoteModal, setShowNoteModal] = useState(false);
-  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [selectedDateForNote, setSelectedDateForNote] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(true);
-  const [loading, setLoading] = useState(false);
-
-  const handlePreviousWeek = () => {
-    setCurrentDate(getPreviousWeek(currentDate));
-  };
-
-  const handleNextWeek = () => {
-    setCurrentDate(getNextWeek(currentDate));
-  };
 
   // Firebase認証の監視
   useEffect(() => {
@@ -91,9 +72,9 @@ function App() {
         // ログアウト時のクリーンアップ
         firestoreService.cleanup();
         setMembers([]);
-        setAttendance([]);
+        setAttendance({});
         setNotes([]);
-        setNotificationSettings(defaultNotificationSettings);
+        setNotifications(defaultNotificationSettings);
       }
     });
 
@@ -124,13 +105,7 @@ function App() {
         setNotes(newNotes);
       });
       unsubscribes.push(notesUnsubscribe);
-
-      // 通知設定の購読
-      const notificationUnsubscribe = firestoreService.subscribeToNotificationSettings((settings) => {
-        setNotificationSettings(settings);
-      });
-      unsubscribes.push(notificationUnsubscribe);
-
+      
       // 接続状態の監視
       const connectionUnsubscribe = firestoreService.subscribeToConnectionStatus((connected) => {
         setIsConnected(connected);
@@ -149,105 +124,72 @@ function App() {
 
   // 通知サービス初期化
   useEffect(() => {
-    notificationService.updateSettings(notificationSettings);
+    notificationService.updateSettings(notifications);
     
     return () => {
       notificationService.destroy();
     };
-  }, [notificationSettings]);
+  }, [notifications]);
 
-  const handleAttendanceChange = (memberId: string, date: string, status: AttendanceStatus) => {
-    const newRecord: AttendanceRecord = {
-      memberId,
-      date,
-      status,
-      updatedAt: new Date(),
-    };
+  const handlePreviousWeek = () => {
+    setCurrentDate(getPreviousWeek(currentDate));
+  };
 
-    setAttendance(prev => ({
-      ...prev,
-      [date]: {
-        ...prev[date],
-        [memberId]: newRecord,
-      },
-    }));
+  const handleNextWeek = () => {
+    setCurrentDate(getNextWeek(currentDate));
+  };
 
-    // 成功メッセージを表示
-    const member = members.find(m => m.id === memberId);
-    const statusText = status === 'present' ? '出席' : status === 'absent' ? '欠席' : '未定';
-    toast.success(`${member?.name}さんの${formatDate(new Date(date), 'M月d日')}を${statusText}に変更しました`);
-
-    // 状況変更通知を送信
-    if (member && notificationSettings.enabled) {
-      notificationService.sendStatusChangeNotification(
-        member.name,
-        formatDate(new Date(date), 'M月d日'),
-        status
-      );
+  const handleAttendanceChange = async (memberId: string, date: string, status: AttendanceStatus) => {
+    try {
+      await firestoreService.updateAttendance(memberId, date, status);
+    } catch (error) {
+      console.error('Error updating attendance:', error);
+      toast.error('出席状況の更新に失敗しました');
     }
   };
 
   // メンバー管理
   const handleAddMember = async (memberData: Omit<FamilyMember, 'id'>) => {
-    const newMember: FamilyMember = {
-      ...memberData,
-      id: Date.now().toString(),
-    };
-    setMembers(prev => [...prev, newMember]);
+    try {
+      await firestoreService.addMember(memberData);
+      toast.success('メンバーを追加しました');
+    } catch (error) {
+      console.error('Error adding member:', error);
+      toast.error('メンバーの追加に失敗しました');
+    }
   };
 
   const handleUpdateMember = async (id: string, memberData: Partial<FamilyMember>) => {
-    setMembers(prev => prev.map(member => 
-      member.id === id ? { ...member, ...memberData } : member
-    ));
+    try {
+      await firestoreService.updateMember(id, memberData);
+      toast.success('メンバーを更新しました');
+    } catch (error) {
+      console.error('Error updating member:', error);
+      toast.error('メンバーの更新に失敗しました');
+    }
   };
 
   const handleDeleteMember = async (id: string) => {
-    setMembers(prev => prev.filter(member => member.id !== id));
-    
-    // そのメンバーの出席データも削除
-    setAttendance(prev => {
-      const newAttendance = { ...prev };
-      Object.keys(newAttendance).forEach(date => {
-        if (newAttendance[date][id]) {
-          delete newAttendance[date][id];
-        }
-      });
-      return newAttendance;
-    });
-
-    // そのメンバーのメモも削除
-    setNotes(prev => prev.filter(note => note.memberId !== id));
+    try {
+      await firestoreService.deleteMember(id);
+      toast.success('メンバーを削除しました');
+    } catch (error) {
+      console.error('Error deleting member:', error);
+      toast.error('メンバーの削除に失敗しました');
+    }
   };
 
   // メモ機能
-  const handleAddNote = async (noteData: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newNote: Note = {
-      ...noteData,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    setNotes(prev => [...prev, newNote]);
+  const handleAddNote = async (memberId: string, date: string, text: string) => {
+    try {
+      await firestoreService.addNote(memberId, date, text);
+      toast.success('メモを追加しました');
+    } catch (error) {
+      console.error('Error adding note:', error);
+      toast.error('メモの追加に失敗しました');
+    }
   };
 
-  const handleUpdateNote = async (id: string, text: string) => {
-    setNotes(prev => prev.map(note =>
-      note.id === id ? { ...note, text, updatedAt: new Date() } : note
-    ));
-  };
-
-  const handleDeleteNote = async (id: string) => {
-    setNotes(prev => prev.filter(note => note.id !== id));
-  };
-
-  // 通知設定
-  const handleUpdateNotificationSettings = async (settings: NotificationSettingsType) => {
-    setNotificationSettings(settings);
-    notificationService.updateSettings(settings);
-  };
-
-  // 日付別メモ表示
   const handleShowNotes = (date: string) => {
     setSelectedDateForNote(date);
     setShowNoteModal(true);
@@ -257,166 +199,132 @@ function App() {
     return notes.filter(note => note.date === date);
   };
 
-  // ローディング状態の表示
+  // 認証ローディング中
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex items-center justify-center">
         <div className="text-center">
-          <Users className="w-12 h-12 text-primary-600 mx-auto mb-4 animate-spin" />
-          <p className="text-gray-600">Firebase認証を確認中...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
         </div>
       </div>
     );
   }
 
-  // 未認証時は認証画面を表示
+  // 未認証の場合は認証画面を表示
   if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-8 px-4">
-        <div className="max-w-md mx-auto">
-          <AuthComponent user={user} onAuthStateChange={setUser} />
-        </div>
-        <Toaster position="top-center" />
-      </div>
-    );
+    return <AuthComponent user={user} onAuthStateChange={setUser} />;
   }
 
-  // 今日の日付をフォーマット
   const today = formatDate(new Date());
-
-  // 今日のメモを取得
-  const todayNotes = notes.filter(note => note.date === today);
-
-  // 週間の出席データを整理
-  const weeklyAttendanceData: { [date: string]: { [memberId: string]: AttendanceStatus } } = {};
-  attendance.forEach(record => {
-    if (!weeklyAttendanceData[record.date]) {
-      weeklyAttendanceData[record.date] = {};
-    }
-    weeklyAttendanceData[record.date][record.memberId] = record.status;
-  });
+  const todayAttendance = attendance[today] || {};
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
       <div className="max-w-6xl mx-auto px-4 py-6">
         {/* ヘッダー */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            🍽️ 家族夕飯カレンダー
-          </h1>
-          <p className="text-gray-600">
-            家族全員の夕飯出席状況を簡単管理
-          </p>
-          
-          {/* 機能ボタン */}
+        <header className="bg-white rounded-lg shadow-sm mb-6 p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">家族夕飯カレンダー</h1>
+              <p className="text-gray-600 mt-1">みんなで夕飯を管理しよう</p>
+            </div>
+            <ConnectionStatus isConnected={isConnected} />
+          </div>
+
+          {/* タブナビゲーション */}
           <div className="flex justify-center space-x-4 mt-6">
             <button
-              onClick={() => setShowMemberManagement(true)}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+              onClick={() => setCurrentTab('calendar')}
+              className={`flex items-center px-4 py-2 rounded-lg transition-colors text-sm ${
+                currentTab === 'calendar'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
             >
-              <Users size={16} className="mr-2" />
+              カレンダー
+            </button>
+            <button
+              onClick={() => setCurrentTab('members')}
+              className={`flex items-center px-4 py-2 rounded-lg transition-colors text-sm ${
+                currentTab === 'members'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              <Users size={16} className="mr-1" />
               メンバー管理
             </button>
-            
             <button
-              onClick={() => handleShowNotes(formatDate(new Date()))}
-              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+              onClick={() => setCurrentTab('notifications')}
+              className={`flex items-center px-4 py-2 rounded-lg transition-colors text-sm ${
+                currentTab === 'notifications'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
             >
-              <MessageSquare size={16} className="mr-2" />
-              今日のメモ
-            </button>
-            
-            <button
-              onClick={() => setShowNotificationSettings(true)}
-              className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
-            >
-              <Bell size={16} className="mr-2" />
+              <Bell size={16} className="mr-1" />
               通知設定
             </button>
           </div>
-        </div>
+        </header>
 
         {/* 週間ナビゲーション */}
-        <WeekNavigation
-          currentDate={currentDate}
-          onPreviousWeek={handlePreviousWeek}
-          onNextWeek={handleNextWeek}
-        />
+        {currentTab === 'calendar' && (
+          <WeekNavigation
+            currentDate={currentDate}
+            onPrevious={handlePreviousWeek}
+            onNext={handleNextWeek}
+          />
+        )}
 
-        {/* カレンダー */}
-        <WeeklyCalendar
-          currentDate={currentDate}
-          members={members}
-          attendance={weeklyAttendanceData}
-          notes={notes}
-          onAttendanceChange={handleAttendanceChange}
-          onShowNotes={handleShowNotes}
-        />
+        {/* メインコンテンツ */}
+        {currentTab === 'calendar' && (
+          <>
+            <WeeklyCalendar
+              currentDate={currentDate}
+              members={members}
+              attendance={attendance}
+              notes={notes}
+              onAttendanceChange={handleAttendanceChange}
+              onShowNotes={handleShowNotes}
+            />
 
-        {/* 今日のサマリー */}
-        <DailySummary
-          currentDate={currentDate}
-          members={members}
-          attendance={weeklyAttendanceData[today] || {}}
-        />
+            <DailySummary
+              members={members}
+              attendance={todayAttendance}
+              notes={notes}
+              currentDate={today}
+              onAddNote={handleAddNote}
+            />
+          </>
+        )}
 
-        {/* 使い方ガイド */}
-        <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            📖 使い方
-          </h3>
-          <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
-            <div className="flex items-start">
-              <span className="text-lg mr-2">🍽️</span>
-              <div>
-                <div className="font-medium">出席</div>
-                <div>夕飯を一緒に食べます</div>
-              </div>
-            </div>
-            <div className="flex items-start">
-              <span className="text-lg mr-2">❌</span>
-              <div>
-                <div className="font-medium">欠席</div>
-                <div>夕飯は食べません</div>
-              </div>
-            </div>
-            <div className="flex items-start">
-              <span className="text-lg mr-2">❓</span>
-              <div>
-                <div className="font-medium">未定</div>
-                <div>まだ決まっていません</div>
-              </div>
-            </div>
-            <div className="flex items-start">
-              <span className="text-lg mr-2">👆</span>
-              <div>
-                <div className="font-medium">タップで変更</div>
-                <div>アイコンをタップして状態を切り替え</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* モーダル */}
-        {showMemberManagement && (
+        {currentTab === 'members' && (
           <MemberManagement
             members={members}
             onAddMember={handleAddMember}
             onUpdateMember={handleUpdateMember}
             onDeleteMember={handleDeleteMember}
-            onClose={() => setShowMemberManagement(false)}
-            loading={loading}
+            onClose={() => setCurrentTab('calendar')}
           />
         )}
 
+        {currentTab === 'notifications' && (
+          <NotificationSettings
+            settings={notifications}
+            members={members}
+            onUpdateSettings={setNotifications}
+          />
+        )}
+
+        {/* モーダル */}
         {showNoteModal && selectedDateForNote && (
           <NoteModal
             date={selectedDateForNote}
             members={members}
             notes={getNotesForDate(selectedDateForNote)}
             onAddNote={handleAddNote}
-            onUpdateNote={handleUpdateNote}
-            onDeleteNote={handleDeleteNote}
             onClose={() => {
               setShowNoteModal(false);
               setSelectedDateForNote(null);
@@ -424,16 +332,17 @@ function App() {
           />
         )}
 
-        {showNotificationSettings && (
-          <NotificationSettings
-            settings={notificationSettings}
-            members={members}
-            onUpdateSettings={handleUpdateNotificationSettings}
-            onClose={() => setShowNotificationSettings(false)}
-          />
-        )}
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+          }}
+        />
       </div>
-      <Toaster position="top-center" />
     </div>
   );
 }
