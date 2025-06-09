@@ -273,8 +273,8 @@ function App() {
         {currentTab === 'calendar' && (
           <WeekNavigation
             currentDate={currentDate}
-            onPrevious={handlePreviousWeek}
-            onNext={handleNextWeek}
+            onPreviousWeek={handlePreviousWeek}
+            onNextWeek={handleNextWeek}
           />
         )}
 
@@ -291,11 +291,9 @@ function App() {
             />
 
             <DailySummary
+              currentDate={new Date()}
               members={members}
-              attendance={todayAttendance}
-              notes={notes}
-              currentDate={today}
-              onAddNote={handleAddNote}
+              attendance={attendance}
             />
           </>
         )}
@@ -314,7 +312,11 @@ function App() {
           <NotificationSettings
             settings={notifications}
             members={members}
-            onUpdateSettings={setNotifications}
+            onUpdateSettings={async (settings) => {
+              setNotifications(settings);
+              // TODO: Firebase への保存実装
+            }}
+            onClose={() => setCurrentTab('calendar')}
           />
         )}
 
@@ -324,7 +326,15 @@ function App() {
             date={selectedDateForNote}
             members={members}
             notes={getNotesForDate(selectedDateForNote)}
-            onAddNote={handleAddNote}
+            onAddNote={async (note) => {
+              await handleAddNote(note.memberId, note.date, note.text);
+            }}
+            onUpdateNote={async () => {
+              // TODO: 更新実装
+            }}
+            onDeleteNote={async () => {
+              // TODO: 削除実装
+            }}
             onClose={() => {
               setShowNoteModal(false);
               setSelectedDateForNote(null);

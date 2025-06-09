@@ -22,7 +22,9 @@ import {
   AttendanceRecord, 
   Note, 
   NotificationSettings,
-  Family 
+  Family,
+  WeeklyAttendance,
+  AttendanceStatus
 } from '../types';
 
 export class FirestoreService {
@@ -137,7 +139,7 @@ export class FirestoreService {
 
   // ========== Attendance ==========
 
-  subscribeToAttendance(callback: (attendance: AttendanceRecord[]) => void): Unsubscribe {
+  subscribeToAttendance(callback: (attendance: WeeklyAttendance) => void): Unsubscribe {
     const familyId = this.getUserFamilyId();
     const attendanceQuery = query(
       collection(db, 'families', familyId, 'attendance'),
@@ -146,23 +148,38 @@ export class FirestoreService {
     );
 
     return onSnapshot(attendanceQuery, (snapshot) => {
-      const attendance = snapshot.docs.map(doc => {
+      const weeklyAttendance: WeeklyAttendance = {};
+      
+      snapshot.docs.forEach(doc => {
         const data = doc.data();
-        return {
+        const record: AttendanceRecord = {
           memberId: data.memberId,
           date: data.date,
           status: data.status,
           note: data.note,
           updatedAt: data.updatedAt?.toDate() || new Date()
-        } as AttendanceRecord;
+        };
+        
+        if (!weeklyAttendance[record.date]) {
+          weeklyAttendance[record.date] = {};
+        }
+        weeklyAttendance[record.date][record.memberId] = record;
       });
-      callback(attendance);
+      
+      callback(weeklyAttendance);
     });
   }
 
-  async updateAttendance(record: AttendanceRecord): Promise<void> {
+  async updateAttendance(memberId: string, date: string, status: AttendanceStatus): Promise<void> {
     const familyId = this.getUserFamilyId();
-    const attendanceId = `${record.date}_${record.memberId}`;
+    const attendanceId = `${date}_${memberId}`;
+    
+    const record: AttendanceRecord = {
+      memberId,
+      date,
+      status,
+      updatedAt: new Date()
+    };
     
     await setDoc(doc(db, 'families', familyId, 'attendance', attendanceId), {
       ...record,
@@ -191,13 +208,17 @@ export class FirestoreService {
     });
   }
 
-  async addNote(noteData: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  async addNote(memberId: string, date: string, text: string): Promise<string> {
     const familyId = this.getUserFamilyId();
-    const docRef = await addDoc(collection(db, 'families', familyId, 'notes'), {
-      ...noteData,
+    const noteData = {
+      memberId,
+      date,
+      text,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    });
+    };
+    
+    const docRef = await addDoc(collection(db, 'families', familyId, 'notes'), noteData);
     return docRef.id;
   }
 
