@@ -1,6 +1,6 @@
 {
   "name": "family-dinner-calendar",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "家族夕飯管理サイト - 家族全員が夕飯の出席状況を簡単に管理・共有",
   "type": "module",
   "private": true,
