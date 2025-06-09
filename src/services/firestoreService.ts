@@ -143,8 +143,7 @@ export class FirestoreService {
     const familyId = this.getUserFamilyId();
     const attendanceQuery = query(
       collection(db, 'families', familyId, 'attendance'),
-      orderBy('date', 'desc'),
-      orderBy('updatedAt', 'desc')
+      orderBy('date', 'desc')
     );
 
     return onSnapshot(attendanceQuery, (snapshot) => {
@@ -193,8 +192,7 @@ export class FirestoreService {
     const familyId = this.getUserFamilyId();
     const notesQuery = query(
       collection(db, 'families', familyId, 'notes'),
-      orderBy('date', 'desc'),
-      orderBy('createdAt', 'desc')
+      orderBy('date', 'desc')
     );
 
     return onSnapshot(notesQuery, (snapshot) => {
