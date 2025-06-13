@@ -180,7 +180,7 @@ function App() {
 
   const handleShowUsage = () => {
     // 使い方ページを新しいタブで開く
-    window.open('https://north25mouth.github.io/family-dinner-usage/', '_blank');
+    window.open('/usage.html', '_blank');
   };
 
   // 認証ローディング中
