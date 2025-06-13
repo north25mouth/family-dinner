@@ -6,12 +6,12 @@ import { getFunctions, connectFunctionsEmulator } from 'firebase/functions';
 // Firebase設定
 // 本番環境では環境変数から取得
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "demo-api-key",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "demo-project.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "demo-project",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "demo-project.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:abcdef"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyD3JmulWBuBbwth_Ml5CKLSjmDZLVDMcA8",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "familydinner-ae09b.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "familydinner-ae09b",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "familydinner-ae09b.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "888619716500",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:888619716500:web:4c0ceee0cc0f759206c981"
 };
 
 // Firebase初期化
