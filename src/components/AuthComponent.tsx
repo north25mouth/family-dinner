@@ -3,12 +3,15 @@ import {
   signInAnonymously, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
-  signOut 
+  signOut,
+  updateProfile
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { User } from 'firebase/auth';
 import { LogIn, LogOut, UserPlus, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 interface AuthComponentProps {
   user: User | null;
@@ -24,6 +27,8 @@ export const AuthComponent: React.FC<AuthComponentProps> = ({
   const [password, setPassword] = useState('');
   const [familyName, setFamilyName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [username, setUsername] = useState('');
+  const [authMode, setAuthMode] = useState<'email' | 'username'>('username');
 
   const handleAnonymousLogin = async () => {
     try {
@@ -64,6 +69,47 @@ export const AuthComponent: React.FC<AuthComponentProps> = ({
         ? 'このメールアドレスは既に使用されています'
         : error.message;
       toast.error(`認証エラー: ${errorMessage}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUsernameLogin = async () => {
+    if (!username || !password) {
+      toast.error('ユーザー名とパスワードを入力してください');
+      return;
+    }
+    setLoading(true);
+    try {
+      const usersRef = collection(db, 'users');
+      if (isLogin) {
+        // ログイン
+        const q = query(usersRef, where('username', '==', username), where('password', '==', password));
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) {
+          toast.error('ユーザー名またはパスワードが間違っています');
+        } else {
+          // 匿名ログインしてFirebase Userオブジェクトを作成
+          const result = await signInAnonymously(auth);
+          // displayNameにユーザー名を設定
+          await updateProfile(result.user, { displayName: username });
+          onAuthStateChange(result.user);
+          toast.success('ログインしました');
+        }
+      } else {
+        // 新規登録
+        const q = query(usersRef, where('username', '==', username));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          toast.error('このユーザー名は既に使われています');
+        } else {
+          await addDoc(usersRef, { username, password });
+          toast.success('アカウントを作成しました。ログインしてください。');
+          setIsLogin(true);
+        }
+      }
+    } catch (error) {
+      toast.error('認証エラー: ' + (error as Error).message);
     } finally {
       setLoading(false);
     }
@@ -134,6 +180,32 @@ export const AuthComponent: React.FC<AuthComponentProps> = ({
         </p>
       </div>
 
+      {/* 認証方式選択 */}
+      <div className="mb-6">
+        <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+          <button
+            onClick={() => setAuthMode('username')}
+            className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+              authMode === 'username' 
+                ? 'bg-primary-600 text-white' 
+                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            ユーザー名
+          </button>
+          <button
+            onClick={() => setAuthMode('email')}
+            className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+              authMode === 'email' 
+                ? 'bg-primary-600 text-white' 
+                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            メールアドレス
+          </button>
+        </div>
+      </div>
+
       <div className="relative mb-6">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-gray-300" />
@@ -143,7 +215,7 @@ export const AuthComponent: React.FC<AuthComponentProps> = ({
         </div>
       </div>
 
-      {/* メール認証 */}
+      {/* 認証フォーム */}
       <div className="space-y-4">
         <div className="flex rounded-lg border border-gray-300 overflow-hidden">
           <button
@@ -168,59 +240,99 @@ export const AuthComponent: React.FC<AuthComponentProps> = ({
           </button>
         </div>
 
-        {!isLogin && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              家族名（オプション）
-            </label>
-            <input
-              type="text"
-              value={familyName}
-              onChange={(e) => setFamilyName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              placeholder="田中家"
-            />
-          </div>
+        {authMode === 'username' ? (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                ユーザー名
+              </label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="familyname"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                パスワード
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="6文字以上"
+              />
+            </div>
+            <button
+              onClick={handleUsernameLogin}
+              disabled={loading}
+              className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              {isLogin ? <LogIn size={20} className="mr-2" /> : <UserPlus size={20} className="mr-2" />}
+              {loading 
+                ? '処理中...' 
+                : isLogin 
+                ? 'ログイン' 
+                : 'アカウント作成'}
+            </button>
+          </>
+        ) : (
+          <>
+            {!isLogin && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  家族名（オプション）
+                </label>
+                <input
+                  type="text"
+                  value={familyName}
+                  onChange={(e) => setFamilyName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="田中家"
+                />
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                メールアドレス
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="family@example.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                パスワード
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                placeholder="6文字以上"
+              />
+            </div>
+            <button
+              onClick={handleEmailLogin}
+              disabled={loading}
+              className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              {isLogin ? <LogIn size={20} className="mr-2" /> : <UserPlus size={20} className="mr-2" />}
+              {loading 
+                ? '処理中...' 
+                : isLogin 
+                ? 'ログイン' 
+                : 'アカウント作成'}
+            </button>
+          </>
         )}
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            メールアドレス
-          </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            placeholder="family@example.com"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            パスワード
-          </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            placeholder="6文字以上"
-          />
-        </div>
-
-        <button
-          onClick={handleEmailLogin}
-          disabled={loading}
-          className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-        >
-          {isLogin ? <LogIn size={20} className="mr-2" /> : <UserPlus size={20} className="mr-2" />}
-          {loading 
-            ? '処理中...' 
-            : isLogin 
-            ? 'ログイン' 
-            : 'アカウント作成'}
-        </button>
 
         <div className="text-xs text-gray-500 text-center">
           {isLogin ? (

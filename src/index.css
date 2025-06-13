@@ -55,6 +55,8 @@
   
   .member-name {
     @apply p-4 font-medium text-gray-900 bg-gray-50 border-r border-gray-200 flex items-center;
+    word-break: break-all;
+    min-width: 72px;
   }
   
   .day-cell {

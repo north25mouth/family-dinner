@@ -3,31 +3,21 @@ import {
   FamilyMember, 
   AttendanceStatus, 
   WeeklyAttendance, 
-  Note, 
-  NotificationSettings as NotificationSettingsType
+  Note
 } from './types';
 import { WeekNavigation } from './components/WeekNavigation';
 import { WeeklyCalendar } from './components/WeeklyCalendar';
 import { DailySummary } from './components/DailySummary';
 import { MemberManagement } from './components/MemberManagement';
 import { NoteModal } from './components/NoteModal';
-import { NotificationSettings } from './components/NotificationSettings';
 import { ConnectionStatus } from './components/ConnectionStatus';
 import { AuthComponent } from './components/AuthComponent';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from './config/firebase';
 import { firestoreService } from './services/firestoreService';
 import { getPreviousWeek, getNextWeek, formatDate } from './utils/dateUtils';
-import { notificationService } from './services/notificationService';
 import toast, { Toaster } from 'react-hot-toast';
-import { Users, MessageSquare, Bell } from 'lucide-react';
-
-const defaultNotificationSettings: NotificationSettingsType = {
-  enabled: false,
-  reminderTime: '17:00',
-  deadlineTime: '18:00',
-  notifyMembers: [],
-};
+import { Users, MessageSquare, HelpCircle } from 'lucide-react';
 
 function App() {
   // 認証状態
@@ -39,10 +29,9 @@ function App() {
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [attendance, setAttendance] = useState<WeeklyAttendance>({});
   const [notes, setNotes] = useState<Note[]>([]);
-  const [notifications, setNotifications] = useState<NotificationSettingsType>(defaultNotificationSettings);
   
   // UI状態
-  const [currentTab, setCurrentTab] = useState<'calendar' | 'members' | 'notifications'>('calendar');
+  const [currentTab, setCurrentTab] = useState<'calendar' | 'members'>('calendar');
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [selectedDateForNote, setSelectedDateForNote] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(true);
@@ -74,7 +63,6 @@ function App() {
         setMembers([]);
         setAttendance({});
         setNotes([]);
-        setNotifications(defaultNotificationSettings);
       }
     });
 
@@ -121,15 +109,6 @@ function App() {
       unsubscribes.forEach(unsubscribe => unsubscribe());
     };
   }, [user]);
-
-  // 通知サービス初期化
-  useEffect(() => {
-    notificationService.updateSettings(notifications);
-    
-    return () => {
-      notificationService.destroy();
-    };
-  }, [notifications]);
 
   const handlePreviousWeek = () => {
     setCurrentDate(getPreviousWeek(currentDate));
@@ -199,6 +178,11 @@ function App() {
     return notes.filter(note => note.date === date);
   };
 
+  const handleShowUsage = () => {
+    // 使い方ページを新しいタブで開く
+    window.open('https://north25mouth.github.io/family-dinner-usage/', '_blank');
+  };
+
   // 認証ローディング中
   if (authLoading) {
     return (
@@ -256,15 +240,11 @@ function App() {
               メンバー管理
             </button>
             <button
-              onClick={() => setCurrentTab('notifications')}
-              className={`flex items-center px-4 py-2 rounded-lg transition-colors text-sm ${
-                currentTab === 'notifications'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
+              onClick={handleShowUsage}
+              className="flex items-center px-4 py-2 rounded-lg transition-colors text-sm bg-gray-200 text-gray-700 hover:bg-gray-300"
             >
-              <Bell size={16} className="mr-1" />
-              通知設定
+              <HelpCircle size={16} className="mr-1" />
+              使い方
             </button>
           </div>
         </header>
@@ -304,18 +284,6 @@ function App() {
             onAddMember={handleAddMember}
             onUpdateMember={handleUpdateMember}
             onDeleteMember={handleDeleteMember}
-            onClose={() => setCurrentTab('calendar')}
-          />
-        )}
-
-        {currentTab === 'notifications' && (
-          <NotificationSettings
-            settings={notifications}
-            members={members}
-            onUpdateSettings={async (settings) => {
-              setNotifications(settings);
-              // TODO: Firebase への保存実装
-            }}
             onClose={() => setCurrentTab('calendar')}
           />
         )}
