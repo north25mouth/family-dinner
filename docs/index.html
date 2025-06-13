@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家族夕飯カレンダー - 使い方</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Meiryo', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0fdfa 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            color: #059669;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            color: #6b7280;
+        }
+        
+        .section {
+            background: white;
+            margin-bottom: 30px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section h2 {
+            font-size: 1.8rem;
+            color: #059669;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #10b981;
+            padding-bottom: 10px;
+        }
+        
+        .section h3 {
+            font-size: 1.3rem;
+            color: #374151;
+            margin: 25px 0 15px 0;
+        }
+        
+        .step {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 10px;
+            border-left: 4px solid #10b981;
+        }
+        
+        .step-number {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f0fdf4;
+            border-radius: 8px;
+            border-left: 4px solid #22c55e;
+        }
+        
+        .feature-list li::before {
+            content: "✅";
+            margin-right: 10px;
+        }
+        
+        .screenshot-placeholder {
+            width: 100%;
+            height: 200px;
+            background: #e5e7eb;
+            border: 2px dashed #9ca3af;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            font-size: 1.1rem;
+            margin: 20px 0;
+        }
+        
+        .tips {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .tips h4 {
+            color: #92400e;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .tips p {
+            color: #78350f;
+        }
+        
+        .back-button {
+            display: inline-block;
+            background: #059669;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-top: 30px;
+            transition: background 0.3s;
+        }
+        
+        .back-button:hover {
+            background: #047857;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .section {
+                padding: 20px;
+            }
+            
+            .section h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍽️ 家族夕飯カレンダー</h1>
+            <p>使い方ガイド</p>
+        </div>
+
+        <div class="section">
+            <h2>📱 アプリの概要</h2>
+            <p>家族夕飯カレンダーは、家族全員で夕飯の出席状況をリアルタイムで共有できるWebアプリです。</p>
+            
+            <ul class="feature-list">
+                <li><strong>リアルタイム同期</strong> - 誰かが出席状況を変更すると、他の家族にも即座に反映</li>
+                <li><strong>スマホ対応</strong> - iPhone・Android・PCどこからでもアクセス可能</li>
+                <li><strong>簡単操作</strong> - ワンタップで出席・欠席・未定を切り替え</li>
+                <li><strong>メモ機能</strong> - 「遅くなります」「お弁当持参」などの連絡事項を記録</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🚀 はじめ方</h2>
+            
+            <div class="step">
+                <span class="step-number">1</span>
+                <strong>ログイン方法を選択</strong>
+                <p>「ユーザー名」または「メールアドレス」でログインできます。家族で共有する場合は「ユーザー名」がおすすめです。</p>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>アカウント作成</strong>
+                <p>初回利用時は「新規登録」タブから家族用のアカウントを作成してください。</p>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">3</span>
+                <strong>メンバー設定</strong>
+                <p>「メンバー管理」タブから家族メンバーを追加・編集できます。名前と色を設定しましょう。</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📅 基本的な使い方</h2>
+            
+            <h3>出席状況の変更</h3>
+            <div class="step">
+                <p>カレンダーの各セルをタップすると、出席状況が切り替わります：</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li><strong>🍽️ 出席</strong> - 夕飯を食べる</li>
+                    <li><strong>❌ 欠席</strong> - 夕飯は食べない</li>
+                    <li><strong>❓ 未定</strong> - まだ分からない</li>
+                </ul>
+            </div>
+            
+            <h3>メモの追加</h3>
+            <div class="step">
+                <p>各日付の右上にあるメモボタン（💬）をタップすると、その日のメモを追加・確認できます。</p>
+                <p>例：「19時頃帰宅予定」「お弁当持参します」など</p>
+            </div>
+            
+            <h3>今日の夕飯確認</h3>
+            <div class="step">
+                <p>カレンダー下部に「今日の夕飯」として、出席予定人数と出席メンバーが表示されます。</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>👥 メンバー管理</h2>
+            
+            <div class="step">
+                <span class="step-number">1</span>
+                <strong>メンバー追加</strong>
+                <p>「新しいメンバーを追加」ボタンから、名前と色を設定して追加できます。</p>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>メンバー編集</strong>
+                <p>既存メンバーの編集ボタン（✏️）から、名前や色を変更できます。</p>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">3</span>
+                <strong>メンバー削除</strong>
+                <p>削除ボタン（🗑️）でメンバーを削除できます。※出席データも一緒に削除されます</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>💡 便利な使い方</h2>
+            
+            <div class="tips">
+                <h4>🏠 家族での共有方法</h4>
+                <p>同じユーザー名とパスワードを家族全員で共有することで、全員が同じデータを見ることができます。LINEやメールでログイン情報を共有しましょう。</p>
+            </div>
+            
+            <div class="tips">
+                <h4>📱 スマホでの使い方</h4>
+                <p>スマホの場合、テーブルが横スクロールできます。メンバー名が多い場合は左右にスワイプして確認してください。</p>
+            </div>
+            
+            <div class="tips">
+                <h4>🔄 リアルタイム同期</h4>
+                <p>誰かが出席状況を変更すると、他の端末にも自動で反映されます。画面上部の「Firebase同期中」表示で接続状況を確認できます。</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>❓ よくある質問</h2>
+            
+            <h3>Q: データは安全ですか？</h3>
+            <p>A: Google Firebaseを使用しており、データは暗号化されて保存されます。</p>
+            
+            <h3>Q: 無料で使えますか？</h3>
+            <p>A: はい、完全無料でご利用いただけます。</p>
+            
+            <h3>Q: アプリをダウンロードする必要がありますか？</h3>
+            <p>A: いいえ、Webブラウザから直接利用できます。ブックマークしておくと便利です。</p>
+            
+            <h3>Q: 過去のデータは見れますか？</h3>
+            <p>A: 週ナビゲーションの矢印ボタンで過去・未来の週を確認できます。</p>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="javascript:window.close()" class="back-button">アプリに戻る</a>
+        </div>
+    </div>
+</body>
+</html> 
