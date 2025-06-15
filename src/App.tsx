@@ -12,12 +12,12 @@ import { MemberManagement } from './components/MemberManagement';
 import { NoteModal } from './components/NoteModal';
 import { ConnectionStatus } from './components/ConnectionStatus';
 import { AuthComponent } from './components/AuthComponent';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User, signOut } from 'firebase/auth';
 import { auth } from './config/firebase';
 import { firestoreService } from './services/firestoreService';
 import { getPreviousWeek, getNextWeek, formatDate } from './utils/dateUtils';
 import toast, { Toaster } from 'react-hot-toast';
-import { Users, MessageSquare, HelpCircle } from 'lucide-react';
+import { Users, MessageSquare, HelpCircle, LogOut } from 'lucide-react';
 
 function App() {
   // 認証状態
@@ -183,6 +183,15 @@ function App() {
     window.open('/usage.html', '_blank');
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast.success('ログアウトしました');
+    } catch (error: any) {
+      toast.error(`ログアウトに失敗しました: ${error.message}`);
+    }
+  };
+
   // 認証ローディング中
   if (authLoading) {
     return (
@@ -213,7 +222,23 @@ function App() {
               <h1 className="text-lg sm:text-2xl font-bold text-gray-900">家族夕飯カレンダー</h1>
               <p className="text-gray-600 mt-1 text-sm sm:text-base">みんなで夕飯を管理しよう</p>
             </div>
-            <ConnectionStatus isConnected={isConnected} />
+            <div className="flex items-center space-x-3">
+              <ConnectionStatus isConnected={isConnected} />
+              <div className="flex items-center text-sm text-gray-600">
+                <Users size={16} className="mr-1" />
+                <span className="hidden sm:inline">
+                  {user?.displayName || 'ゲストユーザー'}
+                </span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center px-2 sm:px-3 py-1 sm:py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm"
+                title="ログアウト"
+              >
+                <LogOut size={16} className="sm:mr-1" />
+                <span className="hidden sm:inline">ログアウト</span>
+              </button>
+            </div>
           </div>
 
           {/* タブナビゲーション */}
