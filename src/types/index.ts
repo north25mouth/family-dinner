@@ -58,6 +58,17 @@ export interface NotificationSettings {
   reminderTime: string; // HH:MM format
   deadlineTime: string; // HH:MM format
   notifyMembers: string[]; // member IDs
+  customSchedules: CustomNotificationSchedule[];
+}
+
+export interface CustomNotificationSchedule {
+  id: string;
+  memberId: string;
+  dayOfWeek: number; // 0=Sunday, 1=Monday, ..., 6=Saturday
+  time: string; // HH:MM format
+  message: string;
+  enabled: boolean;
+  createdAt: Date;
 }
 
 export interface Notification {

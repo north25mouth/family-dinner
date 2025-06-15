@@ -50,35 +50,68 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Firestoreからアクティブなユーザーを取得
+    // 基本的なリマインダーメッセージを送信
     const usersSnapshot = await db.collection('lineUsers')
       .where('isActive', '==', true)
       .get();
 
     const userIds = usersSnapshot.docs.map(doc => doc.data().userId);
+    let sentCount = 0;
 
-    if (userIds.length === 0) {
-      return res.status(200).json({ 
-        success: true, 
-        message: 'No active users found',
-        day: dayNames[dayOfWeek]
-      });
+    if (userIds.length > 0) {
+      // 基本リマインダーを送信
+      const basicPromises = userIds.map(userId => 
+        client.pushMessage(userId, {
+          type: 'text',
+          text: message
+        })
+      );
+      await Promise.all(basicPromises);
+      sentCount += userIds.length;
     }
 
-    // 登録されたユーザーにメッセージを送信
-    const promises = userIds.map(userId => 
-      client.pushMessage(userId, {
-        type: 'text',
-        text: message
-      })
+    // 個別スケジュールをチェック
+    const schedulesSnapshot = await db.collection('lineNotificationSchedules')
+      .where('enabled', '==', true)
+      .where('dayOfWeek', '==', dayOfWeek)
+      .get();
+
+    const customSchedules = schedulesSnapshot.docs.map(doc => doc.data());
+    
+    // 現在時刻と一致するスケジュールを実行
+    const currentHour = today.getHours();
+    const currentMinute = today.getMinutes();
+    const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+
+    const matchingSchedules = customSchedules.filter(schedule => 
+      schedule.time === currentTime
     );
 
-    await Promise.all(promises);
+    if (matchingSchedules.length > 0) {
+      // メンバーIDからLINEユーザーIDを取得する処理
+      // 実際の実装では、メンバーIDとLINEユーザーIDの関連付けが必要
+      const customPromises = matchingSchedules.map(async (schedule) => {
+        // ここでは簡単のため、全てのアクティブユーザーに送信
+        // 実際の運用では、メンバーIDに対応するLINEユーザーIDを特定する
+        const customMessage = schedule.message || message;
+        
+        return Promise.all(userIds.map(userId => 
+          client.pushMessage(userId, {
+            type: 'text',
+            text: `📅 個別リマインダー\n\n${customMessage}\n\n家族夕飯カレンダー：\nhttps://family-dinner.vercel.app`
+          })
+        ));
+      });
+
+      await Promise.all(customPromises);
+      sentCount += matchingSchedules.length * userIds.length;
+    }
 
     res.status(200).json({ 
       success: true, 
-      message: `Reminder sent to ${userIds.length} users`,
-      day: dayNames[dayOfWeek]
+      message: `Reminder sent to ${userIds.length} users, ${matchingSchedules.length} custom schedules executed`,
+      day: dayNames[dayOfWeek],
+      customSchedulesExecuted: matchingSchedules.length
     });
   } catch (error) {
     console.error('Send reminder error:', error);

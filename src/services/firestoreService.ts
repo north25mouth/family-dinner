@@ -22,6 +22,7 @@ import {
   AttendanceRecord, 
   Note, 
   NotificationSettings,
+  CustomNotificationSchedule,
   Family,
   WeeklyAttendance,
   AttendanceStatus
@@ -259,7 +260,8 @@ export class FirestoreService {
           enabled: false,
           reminderTime: '17:00',
           deadlineTime: '18:00',
-          notifyMembers: []
+          notifyMembers: [],
+          customSchedules: []
         };
         callback(defaultSettings);
       }
@@ -323,7 +325,8 @@ export class FirestoreService {
       enabled: false,
       reminderTime: '17:00',
       deadlineTime: '18:00',
-      notifyMembers: []
+      notifyMembers: [],
+      customSchedules: []
     };
     
     batch.set(

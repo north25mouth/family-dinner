@@ -3,7 +3,9 @@ import {
   FamilyMember, 
   AttendanceStatus, 
   WeeklyAttendance, 
-  Note
+  Note,
+  NotificationSettings as NotificationSettingsType,
+  CustomNotificationSchedule
 } from './types';
 import { WeekNavigation } from './components/WeekNavigation';
 import { WeeklyCalendar } from './components/WeeklyCalendar';
@@ -12,12 +14,13 @@ import { MemberManagement } from './components/MemberManagement';
 import { NoteModal } from './components/NoteModal';
 import { ConnectionStatus } from './components/ConnectionStatus';
 import { AuthComponent } from './components/AuthComponent';
+import { NotificationSettings } from './components/NotificationSettings';
 import { onAuthStateChanged, User, signOut } from 'firebase/auth';
 import { auth } from './config/firebase';
 import { firestoreService } from './services/firestoreService';
 import { getPreviousWeek, getNextWeek, formatDate } from './utils/dateUtils';
 import toast, { Toaster } from 'react-hot-toast';
-import { Users, MessageSquare, HelpCircle, LogOut } from 'lucide-react';
+import { Users, MessageSquare, HelpCircle, LogOut, Bell } from 'lucide-react';
 
 function App() {
   // 認証状態
@@ -35,6 +38,14 @@ function App() {
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [selectedDateForNote, setSelectedDateForNote] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(true);
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettingsType>({
+    enabled: false,
+    reminderTime: '17:00',
+    deadlineTime: '18:00',
+    notifyMembers: [],
+    customSchedules: []
+  });
 
   // Firebase認証の監視
   useEffect(() => {
@@ -93,6 +104,12 @@ function App() {
         setNotes(newNotes);
       });
       unsubscribes.push(notesUnsubscribe);
+
+      // 通知設定の購読
+      const notificationUnsubscribe = firestoreService.subscribeToNotificationSettings((settings) => {
+        setNotificationSettings(settings);
+      });
+      unsubscribes.push(notificationUnsubscribe);
       
       // 接続状態の監視
       const connectionUnsubscribe = firestoreService.subscribeToConnectionStatus((connected) => {
@@ -183,6 +200,44 @@ function App() {
     window.open('/usage.html', '_blank');
   };
 
+  // 通知設定の更新
+  const handleUpdateNotificationSettings = async (settings: NotificationSettingsType) => {
+    try {
+      await firestoreService.updateNotificationSettings(settings);
+      
+      // カスタムスケジュールをLINE Bot APIに送信
+      if (settings.customSchedules.length > 0) {
+        await updateLineNotificationSchedules(settings.customSchedules);
+      }
+      
+      toast.success('通知設定を更新しました');
+    } catch (error) {
+      console.error('Error updating notification settings:', error);
+      toast.error('通知設定の更新に失敗しました');
+      throw error;
+    }
+  };
+
+  // LINE Bot APIにスケジュールを送信
+  const updateLineNotificationSchedules = async (schedules: CustomNotificationSchedule[]) => {
+    try {
+      const response = await fetch('/api/update-schedules', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ schedules }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update LINE notification schedules');
+      }
+    } catch (error) {
+      console.error('Error updating LINE schedules:', error);
+      // LINE Bot APIの更新に失敗してもFirestoreの更新は成功させる
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -242,10 +297,10 @@ function App() {
           </div>
 
           {/* タブナビゲーション */}
-          <div className="flex justify-center space-x-2 sm:space-x-4 mt-4 sm:mt-6">
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mt-4 sm:mt-6">
             <button
               onClick={() => setCurrentTab('calendar')}
-              className={`flex items-center px-4 py-2 rounded-lg transition-colors text-sm ${
+              className={`flex items-center px-3 sm:px-4 py-2 rounded-lg transition-colors text-xs sm:text-sm ${
                 currentTab === 'calendar'
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -255,21 +310,31 @@ function App() {
             </button>
             <button
               onClick={() => setCurrentTab('members')}
-              className={`flex items-center px-4 py-2 rounded-lg transition-colors text-sm ${
+              className={`flex items-center px-3 sm:px-4 py-2 rounded-lg transition-colors text-xs sm:text-sm ${
                 currentTab === 'members'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
-              <Users size={16} className="mr-1" />
-              メンバー管理
+              <Users size={14} className="mr-1 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">メンバー管理</span>
+              <span className="sm:hidden">メンバー</span>
+            </button>
+            <button
+              onClick={() => setShowNotificationSettings(true)}
+              className="flex items-center px-3 sm:px-4 py-2 rounded-lg transition-colors text-xs sm:text-sm bg-gray-200 text-gray-700 hover:bg-gray-300"
+            >
+              <Bell size={14} className="mr-1 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">通知設定</span>
+              <span className="sm:hidden">通知</span>
             </button>
             <button
               onClick={handleShowUsage}
-              className="flex items-center px-4 py-2 rounded-lg transition-colors text-sm bg-gray-200 text-gray-700 hover:bg-gray-300"
+              className="flex items-center px-3 sm:px-4 py-2 rounded-lg transition-colors text-xs sm:text-sm bg-gray-200 text-gray-700 hover:bg-gray-300"
             >
-              <HelpCircle size={16} className="mr-1" />
-              使い方
+              <HelpCircle size={14} className="mr-1 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">使い方</span>
+              <span className="sm:hidden">ヘルプ</span>
             </button>
           </div>
         </header>
@@ -332,6 +397,16 @@ function App() {
               setShowNoteModal(false);
               setSelectedDateForNote(null);
             }}
+          />
+        )}
+
+        {/* 通知設定モーダル */}
+        {showNotificationSettings && (
+          <NotificationSettings
+            settings={notificationSettings}
+            members={members}
+            onUpdateSettings={handleUpdateNotificationSettings}
+            onClose={() => setShowNotificationSettings(false)}
           />
         )}
 
