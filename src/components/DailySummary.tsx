@@ -28,7 +28,7 @@ export const DailySummary: React.FC<DailySummaryProps> = ({
   return (
     <div className="summary-card">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">
-        今日の夕飯 ({formatDate(today, 'M月d日(E)')})
+        今日の夜ご飯 ({formatDate(today, 'M月d日(E)')})
       </h3>
       
       <div className="bg-primary-50 rounded-lg p-4">

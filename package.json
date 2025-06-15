@@ -1,7 +1,7 @@
 {
-  "name": "family-dinner-calendar",
+  "name": "family-dinner-schedule",
   "version": "1.0.1",
-  "description": "家族夕飯管理サイト - 家族全員が夕飯の出席状況を簡単に管理・共有",
+  "description": "家族の夜ご飯スケジュール - 家族全員が夜ご飯の出席状況を簡単に管理・共有",
   "type": "module",
   "private": true,
   "scripts": {

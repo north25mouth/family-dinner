@@ -182,10 +182,10 @@ export const AuthComponent: React.FC<AuthComponentProps> = ({
     <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          🍽️ 家族夕飯カレンダー
+          🍽️ 家族の夜ご飯スケジュール
         </h2>
         <p className="text-gray-600">
-          家族全員でリアルタイム共有
+          家族全員で夜ご飯の出席状況を共有しましょう
         </p>
       </div>
 

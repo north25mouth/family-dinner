@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
-        name: '家族夕飯カレンダー',
-        short_name: '夕飯カレンダー',
-        description: '家族全員が夕飯の出席状況を簡単に管理・共有',
+        name: '家族の夜ご飯スケジュール',
+        short_name: '夜ご飯スケジュール',
+                  description: '家族全員が夜ご飯の出席状況を簡単に管理・共有',
         theme_color: '#10b981',
         background_color: '#ffffff',
         display: 'standalone',

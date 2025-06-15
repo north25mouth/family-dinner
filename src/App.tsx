@@ -225,8 +225,8 @@ function App() {
         <header className="bg-white rounded-lg shadow-sm mb-3 sm:mb-6 p-3 sm:p-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-lg sm:text-2xl font-bold text-gray-900">家族夕飯カレンダー</h1>
-              <p className="text-gray-600 mt-1 text-sm sm:text-base">みんなで夕飯を管理しよう</p>
+                              <h1 className="text-lg sm:text-2xl font-bold text-gray-900">家族の夜ご飯スケジュール</h1>
+                              <p className="text-gray-600 mt-1 text-sm sm:text-base">みんなで夜ご飯を管理しよう</p>
             </div>
             <div className="flex items-center space-x-3">
               <ConnectionStatus isConnected={isConnected} />

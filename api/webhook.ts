@@ -63,7 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const welcomeMessage: TextMessage = {
           type: 'text',
-          text: `🎉 家族夕飯カレンダーBotへようこそ！\n\n🍽️ このBotでは定期的に夕飯予定の入力をお知らせします。\n\n📅 家族夕飯カレンダー：\nhttps://family-dinner.vercel.app\n\n💡 「夕飯」「予定」「使い方」「ヘルプ」などのキーワードで話しかけてください！\n\n✨ 毎週月・水・金曜日に予定入力のリマインダーをお送りします。`
+          text: `🎉 家族の夜ご飯スケジュールBotへようこそ！\n\n🍽️ このBotでは定期的に夜ご飯予定の入力をお知らせします。\n\n📅 家族の夜ご飯スケジュール：\nhttps://family-dinner.vercel.app\n\n💡 「夕飯」「予定」「使い方」「ヘルプ」などのキーワードで話しかけてください！\n\n✨ 毎週月・水・金曜日に予定入力のリマインダーをお送りします。`
         };
         
         await client.replyMessage(event.replyToken, welcomeMessage);
@@ -79,7 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (text.toLowerCase().includes('夕飯') || text.toLowerCase().includes('予定')) {
           replyMessage = {
             type: 'text',
-            text: `🍽️ 家族夕飯カレンダーで予定を確認・登録してください！\n\n📅 こちらからアクセス：\nhttps://family-dinner.vercel.app\n\n✅ 今週の夕飯予定を入力して、家族みんなで共有しましょう！`
+            text: `🍽️ 家族の夜ご飯スケジュールで予定を確認・登録してください！\n\n📅 こちらからアクセス：\nhttps://family-dinner.vercel.app\n\n✅ 今週の夜ご飯予定を入力して、家族みんなで共有しましょう！`
           };
         } else if (text.toLowerCase().includes('使い方') || text.toLowerCase().includes('ヘルプ')) {
           replyMessage = {
@@ -89,7 +89,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         } else {
           replyMessage = {
             type: 'text',
-            text: `こんにちは！🍽️\n\n家族夕飯カレンダーBotです。\n\n📅 夕飯の予定を確認・登録：\nhttps://family-dinner.vercel.app\n\n💡 「夕飯」「予定」「使い方」「ヘルプ」などのキーワードで話しかけてください！`
+            text: `こんにちは！🍽️\n\n家族の夜ご飯スケジュールBotです。\n\n📅 夜ご飯の予定を確認・登録：\nhttps://family-dinner.vercel.app\n\n💡 「夕飯」「予定」「使い方」「ヘルプ」などのキーワードで話しかけてください！`
           };
         }
         

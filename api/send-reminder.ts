@@ -37,11 +37,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let message = '';
     
     if (dayOfWeek === 1) { // 月曜日
-      message = `🍽️ 今週の夕飯予定を入力しましょう！\n\n📅 家族夕飯カレンダー：\nhttps://family-dinner.vercel.app\n\n✨ 新しい週が始まりました！\n今週の夕飯予定を家族みんなで共有して、\n楽しい食事時間を過ごしましょう🎉`;
+      message = `🍽️ 今週の夜ご飯予定を入力しましょう！\n\n📅 家族の夜ご飯スケジュール：\nhttps://family-dinner.vercel.app\n\n✨ 新しい週が始まりました！\n今週の夜ご飯予定を家族みんなで共有して、\n楽しい食事時間を過ごしましょう🎉`;
     } else if (dayOfWeek === 3) { // 水曜日
-      message = `🍽️ 今週後半の夕飯予定はいかがですか？\n\n📅 予定の確認・更新：\nhttps://family-dinner.vercel.app\n\n💡 週の真ん中です！\n木曜日〜日曜日の予定も\n忘れずに入力してくださいね😊`;
+      message = `🍽️ 今週後半の夜ご飯予定はいかがですか？\n\n📅 予定の確認・更新：\nhttps://family-dinner.vercel.app\n\n💡 週の真ん中です！\n木曜日〜日曜日の予定も\n忘れずに入力してくださいね😊`;
     } else if (dayOfWeek === 5) { // 金曜日
-      message = `🍽️ 週末の夕飯予定をチェック！\n\n📅 家族夕飯カレンダー：\nhttps://family-dinner.vercel.app\n\n🎉 お疲れさまでした！\n週末の夕飯予定も確認して、\n素敵な週末をお過ごしください✨`;
+      message = `🍽️ 週末の夜ご飯予定をチェック！\n\n📅 家族の夜ご飯スケジュール：\nhttps://family-dinner.vercel.app\n\n🎉 お疲れさまでした！\n週末の夜ご飯予定も確認して、\n素敵な週末をお過ごしください✨`;
     } else {
       // その他の曜日は送信しない
       return res.status(200).json({ 
