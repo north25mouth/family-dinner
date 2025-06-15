@@ -102,8 +102,12 @@ export const AuthComponent: React.FC<AuthComponentProps> = ({
         } else {
           // 匿名ログインしてFirebase Userオブジェクトを作成
           const result = await signInAnonymously(auth);
-          // displayNameにユーザー名を設定
-          await updateProfile(result.user, { displayName: username });
+          // displayNameにユーザー名を設定し、カスタムクレームとしてfamilyIdも設定
+          await updateProfile(result.user, { 
+            displayName: username,
+            // photoURLにfamilyIdを格納（一時的な解決策）
+            photoURL: `family_${username}`
+          });
           onAuthStateChange(result.user);
           toast.success(`${username}さん、おかえりなさい！`);
         }
@@ -119,6 +123,7 @@ export const AuthComponent: React.FC<AuthComponentProps> = ({
           await addDoc(usersRef, { 
             username, 
             password,
+            familyId: `family_${username}`, // familyIdを明示的に保存
             createdAt: new Date().toISOString()
           });
           toast.success('アカウントを作成しました！ログインしてください。');

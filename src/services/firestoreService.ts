@@ -41,13 +41,25 @@ export class FirestoreService {
 
   setUser(user: User | null) {
     this.user = user;
-    this.familyId = user ? user.uid : null;
+    // ユーザーネーム認証の場合はphotoURLからfamilyIdを取得、そうでなければUIDを使用
+    if (user && user.photoURL && user.photoURL.startsWith('family_')) {
+      this.familyId = user.photoURL;
+    } else {
+      this.familyId = user ? user.uid : null;
+    }
   }
 
   private getUserFamilyId(): string {
     if (!this.user) {
       throw new Error('ユーザーがログインしていません');
     }
+    
+    // ユーザーネーム認証の場合はphotoURLからfamilyIdを取得
+    if (this.user.photoURL && this.user.photoURL.startsWith('family_')) {
+      return this.user.photoURL;
+    }
+    
+    // 従来の匿名認証の場合はUIDを使用
     return this.user.uid;
   }
 
