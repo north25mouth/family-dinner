@@ -21,8 +21,6 @@ import {
   FamilyMember, 
   AttendanceRecord, 
   Note, 
-  NotificationSettings,
-  CustomNotificationSchedule,
   Family,
   WeeklyAttendance,
   AttendanceStatus
@@ -246,32 +244,7 @@ export class FirestoreService {
     await deleteDoc(doc(db, 'families', familyId, 'notes', noteId));
   }
 
-  // ========== Notification Settings ==========
 
-  subscribeToNotificationSettings(callback: (settings: NotificationSettings) => void): Unsubscribe {
-    const familyId = this.getUserFamilyId();
-    
-    return onSnapshot(doc(db, 'families', familyId, 'settings', 'notifications'), (doc) => {
-      if (doc.exists()) {
-        callback(doc.data() as NotificationSettings);
-      } else {
-        // デフォルト設定を作成
-        const defaultSettings: NotificationSettings = {
-          enabled: false,
-          reminderTime: '17:00',
-          deadlineTime: '18:00',
-          notifyMembers: [],
-          customSchedules: []
-        };
-        callback(defaultSettings);
-      }
-    });
-  }
-
-  async updateNotificationSettings(settings: NotificationSettings): Promise<void> {
-    const familyId = this.getUserFamilyId();
-    await setDoc(doc(db, 'families', familyId, 'settings', 'notifications'), settings);
-  }
 
   // ========== Real-time Sync Utilities ==========
 
@@ -320,19 +293,7 @@ export class FirestoreService {
       batch.set(memberRef, member);
     });
 
-    // デフォルト通知設定
-    const notificationSettings: NotificationSettings = {
-      enabled: false,
-      reminderTime: '17:00',
-      deadlineTime: '18:00',
-      notifyMembers: [],
-      customSchedules: []
-    };
-    
-    batch.set(
-      doc(db, 'families', familyId, 'settings', 'notifications'), 
-      notificationSettings
-    );
+
 
     await batch.commit();
   }

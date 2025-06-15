@@ -20,9 +20,6 @@
     },
     "api/register-user.ts": {
       "maxDuration": 30
-    },
-    "api/update-schedules.ts": {
-      "maxDuration": 30
     }
   }
 } 

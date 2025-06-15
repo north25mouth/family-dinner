@@ -53,38 +53,4 @@ export interface Note {
   updatedAt: Date;
 }
 
-export interface NotificationSettings {
-  enabled: boolean;
-  reminderTime: string; // HH:MM format
-  deadlineTime: string; // HH:MM format
-  notifyMembers: string[]; // member IDs
-  customSchedules: CustomNotificationSchedule[];
-}
-
-export interface CustomNotificationSchedule {
-  id: string;
-  memberId: string;
-  dayOfWeek: number; // 0=Sunday, 1=Monday, ..., 6=Saturday
-  time: string; // HH:MM format
-  message: string;
-  enabled: boolean;
-  createdAt: Date;
-}
-
-export interface Notification {
-  id: string;
-  type: 'reminder' | 'deadline' | 'status_change';
-  title: string;
-  message: string;
-  targetMembers: string[];
-  date: string;
-  read: boolean;
-  createdAt: Date;
-}
-
-export interface FamilySettings {
-  familyId: string;
-  notifications: NotificationSettings;
-  timezone: string;
-  lastSyncAt: Date;
-} 
+ 
