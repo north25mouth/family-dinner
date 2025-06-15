@@ -27,7 +27,7 @@ const statusConfig = {
 };
 
 const sizeConfig = {
-  sm: 'text-lg p-1 min-h-[36px] min-w-[36px]',
+  sm: 'text-sm sm:text-lg p-0.5 sm:p-1 min-h-[28px] min-w-[28px] sm:min-h-[36px] sm:min-w-[36px]',
   md: 'text-xl p-2 min-h-[44px] min-w-[44px]',
   lg: 'text-2xl p-3 min-h-[52px] min-w-[52px]'
 };

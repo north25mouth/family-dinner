@@ -205,19 +205,19 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-6xl mx-auto px-2 sm:px-4 py-3 sm:py-6">
         {/* ヘッダー */}
-        <header className="bg-white rounded-lg shadow-sm mb-6 p-6">
+        <header className="bg-white rounded-lg shadow-sm mb-3 sm:mb-6 p-3 sm:p-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">家族夕飯カレンダー</h1>
-              <p className="text-gray-600 mt-1">みんなで夕飯を管理しよう</p>
+              <h1 className="text-lg sm:text-2xl font-bold text-gray-900">家族夕飯カレンダー</h1>
+              <p className="text-gray-600 mt-1 text-sm sm:text-base">みんなで夕飯を管理しよう</p>
             </div>
             <ConnectionStatus isConnected={isConnected} />
           </div>
 
           {/* タブナビゲーション */}
-          <div className="flex justify-center space-x-4 mt-6">
+          <div className="flex justify-center space-x-2 sm:space-x-4 mt-4 sm:mt-6">
             <button
               onClick={() => setCurrentTab('calendar')}
               className={`flex items-center px-4 py-2 rounded-lg transition-colors text-sm ${

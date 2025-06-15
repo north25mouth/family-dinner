@@ -47,11 +47,11 @@ export const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
   };
 
   return (
-    <div className="w-full overflow-x-auto">
-      <div className="calendar-grid min-w-[600px]">
+    <div className="w-full">
+      <div className="calendar-grid">
         {/* Header */}
         <div className="calendar-header">
-          <div className="p-4 font-semibold text-gray-700">メンバー</div>
+          <div className="p-2 sm:p-4 font-semibold text-gray-700 text-xs sm:text-sm">メンバー</div>
           {weekDates.map((date) => {
             const dateStr = formatDate(date);
             const dayNotes = getNotesForDate(dateStr);
@@ -59,11 +59,11 @@ export const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
             return (
               <div
                 key={dateStr}
-                className={`p-4 text-center font-semibold relative ${
+                className={`p-2 sm:p-4 text-center font-semibold relative ${
                   isDateToday(date) ? 'bg-primary-50 text-primary-700' : 'text-gray-700'
                 }`}
               >
-                <div className="text-sm">{getDayOfWeekShort(date)}</div>
+                <div className="text-xs sm:text-sm">{getDayOfWeekShort(date)}</div>
                 <div className="text-xs text-gray-500 mt-1">
                   {formatDate(date, 'M/d')}
                 </div>
@@ -72,16 +72,16 @@ export const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                 {onShowNotes && (
                   <button
                     onClick={() => onShowNotes(dateStr)}
-                    className={`absolute top-2 right-2 p-1 rounded transition-colors ${
+                    className={`absolute top-1 right-1 sm:top-2 sm:right-2 p-1 rounded transition-colors ${
                       dayNotes.length > 0 
                         ? 'text-blue-600 bg-blue-100 hover:bg-blue-200' 
                         : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
                     }`}
                     title={`${dayNotes.length}件のメモ`}
                   >
-                    <MessageSquare size={12} />
+                    <MessageSquare size={10} className="sm:w-3 sm:h-3" />
                     {dayNotes.length > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-3 h-3 sm:w-4 sm:h-4 flex items-center justify-center text-xs">
                         {dayNotes.length}
                       </span>
                     )}
@@ -96,13 +96,15 @@ export const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
         <div className="calendar-body">
           {members.map((member) => (
             <div key={member.id} className="member-row">
-              <div className="member-name break-all min-w-[72px]">
-                <div className="flex items-center">
+              <div className="member-name">
+                <div className="flex items-center justify-center w-full h-full">
                   <div
-                    className="w-3 h-3 rounded-full mr-3"
+                    className="w-2 h-2 sm:w-3 sm:h-3 rounded-full mr-1 sm:mr-2 flex-shrink-0"
                     style={{ backgroundColor: member.color }}
                   />
-                  {member.name}
+                  <div className="member-name-text">
+                    {member.name}
+                  </div>
                 </div>
               </div>
               {weekDates.map((date) => {
@@ -115,7 +117,7 @@ export const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                     <AttendanceButton
                       status={status}
                       onClick={() => handleStatusChange(member.id, dateStr)}
-                      size="md"
+                      size="sm"
                     />
                   </div>
                 );
