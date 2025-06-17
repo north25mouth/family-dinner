@@ -39,9 +39,15 @@ function App() {
   const [isConnected, setIsConnected] = useState(true);
 
 
-  // Firebase認証の監視
+  // Firebase認証の監視とデータ購読
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    let unsubscribes: (() => void)[] = [];
+
+    const authUnsubscribe = onAuthStateChanged(auth, async (user) => {
+      // 既存の購読をクリーンアップ
+      unsubscribes.forEach(unsubscribe => unsubscribe());
+      unsubscribes = [];
+
       setUser(user);
       setAuthLoading(false);
       
@@ -54,6 +60,32 @@ function App() {
         try {
           await firestoreService.ensureFamilyExists();
           console.log('家族データの確認・初期化完了');
+          
+          // データ購読を開始
+          const membersUnsubscribe = firestoreService.subscribeToMembers((newMembers) => {
+            console.log('メンバーデータ更新:', newMembers.length + '人');
+            setMembers(newMembers);
+            setDataLoading(false); // 最初のデータが読み込まれたらローディング終了
+          });
+          unsubscribes.push(membersUnsubscribe);
+
+          const attendanceUnsubscribe = firestoreService.subscribeToAttendance((newAttendance) => {
+            console.log('出席データ更新:', Object.keys(newAttendance).length + '日分');
+            setAttendance(newAttendance);
+          });
+          unsubscribes.push(attendanceUnsubscribe);
+
+          const notesUnsubscribe = firestoreService.subscribeToNotes((newNotes) => {
+            console.log('メモデータ更新:', newNotes.length + '件');
+            setNotes(newNotes);
+          });
+          unsubscribes.push(notesUnsubscribe);
+
+          const connectionUnsubscribe = firestoreService.subscribeToConnectionStatus((connected) => {
+            setIsConnected(connected);
+          });
+          unsubscribes.push(connectionUnsubscribe);
+
         } catch (error) {
           console.error('家族データの確認エラー:', error);
           toast.error('データの読み込みに失敗しました');
@@ -69,61 +101,11 @@ function App() {
       }
     });
 
-    return () => unsubscribe();
-  }, []);
-
-  // データの購読（ユーザーがログインしている場合のみ）
-  useEffect(() => {
-    if (!user) return;
-
-    const unsubscribes: (() => void)[] = [];
-
-    // 家族データの初期化完了後にリアルタイム同期を開始
-    const startDataSubscription = async () => {
-      try {
-        // 少し待ってから同期を開始（家族データ作成の完了を待つ）
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // メンバーデータの購読
-        const membersUnsubscribe = firestoreService.subscribeToMembers((newMembers) => {
-          console.log('メンバーデータ更新:', newMembers.length + '人');
-          setMembers(newMembers);
-          setDataLoading(false); // 最初のデータが読み込まれたらローディング終了
-        });
-        unsubscribes.push(membersUnsubscribe);
-
-        // 出席データの購読
-        const attendanceUnsubscribe = firestoreService.subscribeToAttendance((newAttendance) => {
-          console.log('出席データ更新:', Object.keys(newAttendance).length + '日分');
-          setAttendance(newAttendance);
-        });
-        unsubscribes.push(attendanceUnsubscribe);
-
-        // メモデータの購読
-        const notesUnsubscribe = firestoreService.subscribeToNotes((newNotes) => {
-          console.log('メモデータ更新:', newNotes.length + '件');
-          setNotes(newNotes);
-        });
-        unsubscribes.push(notesUnsubscribe);
-
-        // 接続状態の監視
-        const connectionUnsubscribe = firestoreService.subscribeToConnectionStatus((connected) => {
-          setIsConnected(connected);
-        });
-        unsubscribes.push(connectionUnsubscribe);
-
-      } catch (error) {
-        console.error('データ購読エラー:', error);
-        toast.error('データの同期に失敗しました');
-      }
-    };
-
-    startDataSubscription();
-
     return () => {
+      authUnsubscribe();
       unsubscribes.forEach(unsubscribe => unsubscribe());
     };
-  }, [user]);
+  }, []);
 
   const handlePreviousWeek = () => {
     setCurrentDate(getPreviousWeek(currentDate));

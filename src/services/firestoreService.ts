@@ -296,6 +296,7 @@ export class FirestoreService {
 
   async ensureFamilyExists(): Promise<void> {
     const familyId = this.getUserFamilyId();
+    console.log('家族データ確認開始 - familyId:', familyId);
     
     try {
       // 家族データの存在確認
@@ -303,19 +304,28 @@ export class FirestoreService {
       
       if (!family) {
         // 家族データが存在しない場合のみ作成
+        console.log('家族データが存在しないため新規作成します');
         await this.createFamily('我が家');
         console.log('新しい家族データを作成しました');
+      } else {
+        console.log('既存の家族データを確認しました:', family.name);
       }
       
       // メンバーデータの存在確認
       const membersSnapshot = await getDocs(collection(db, 'families', familyId, 'members'));
+      console.log('メンバーコレクション確認 - 件数:', membersSnapshot.size);
       
       if (membersSnapshot.empty) {
         // メンバーが存在しない場合のみデフォルトメンバーを作成
+        console.log('メンバーが存在しないためデフォルトメンバーを作成します');
         await this.initializeDefaultData();
         console.log('デフォルトメンバーを作成しました');
       } else {
         console.log(`既存のメンバー ${membersSnapshot.size}人を確認しました`);
+        membersSnapshot.forEach(doc => {
+          const member = doc.data();
+          console.log('- 既存メンバー:', member.name, '(order:', member.order, ')');
+        });
       }
     } catch (error) {
       console.error('家族データの確認・作成エラー:', error);
@@ -325,6 +335,7 @@ export class FirestoreService {
 
   async initializeDefaultData(): Promise<void> {
     const familyId = this.getUserFamilyId();
+    console.log('デフォルトデータ初期化開始 - familyId:', familyId);
     const batch = writeBatch(db);
 
     // デフォルトメンバーを追加
@@ -335,12 +346,15 @@ export class FirestoreService {
       { name: '花子', color: '#F59E0B', order: 4 },
     ];
 
-    defaultMembers.forEach((member) => {
+    console.log('作成するデフォルトメンバー:', defaultMembers.length + '人');
+    defaultMembers.forEach((member, index) => {
+      console.log(`- ${index + 1}: ${member.name} (${member.color})`);
       const memberRef = doc(collection(db, 'families', familyId, 'members'));
       batch.set(memberRef, member);
     });
 
     await batch.commit();
+    console.log('デフォルトメンバーのバッチ作成完了');
   }
 
   // ========== Cleanup ==========
