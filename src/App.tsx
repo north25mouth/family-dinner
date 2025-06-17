@@ -62,21 +62,26 @@ function App() {
         setDataLoading(true);
         setIsInitialized(false);
         
-        // 家族データの初期化（必要な場合のみ）
+        // まずデータ購読を開始（既存データがあれば即座に表示）
+        await startDataSubscription();
+        
+        // 家族データの初期化（バックグラウンドで実行）
         try {
           console.log('家族データの初期化を開始します - ユーザー:', currentUserId);
           await firestoreService.ensureFamilyExists();
           console.log('家族データの確認・初期化完了');
           setIsInitialized(true);
-          
-          // データ購読を開始
-          await startDataSubscription();
-
         } catch (error) {
-          console.error('家族データの確認エラー:', error);
-          toast.error('データの読み込みに失敗しました');
-          setDataLoading(false);
-          setIsInitialized(false);
+          console.error('家族データの初期化でエラーが発生しましたが、処理を継続します:', error);
+          // エラーがあっても初期化済みとしてマーク（データ購読は既に開始済み）
+          setIsInitialized(true);
+          
+          // 重大なエラーの場合のみユーザーに通知
+          if (error instanceof Error && error.message.includes('permission')) {
+            toast.error('データベースへのアクセス権限がありません');
+          } else {
+            console.warn('初期化エラーを無視して処理を継続します');
+          }
         }
       } else {
         // ログアウト時のクリーンアップ
@@ -91,29 +96,44 @@ function App() {
 
     // データ購読関数を定義
     const startDataSubscription = async () => {
-      const membersUnsubscribe = firestoreService.subscribeToMembers((newMembers) => {
-        console.log('メンバーデータ更新:', newMembers.length + '人');
-        setMembers(newMembers);
-        setDataLoading(false); // 最初のデータが読み込まれたらローディング終了
-      });
-      unsubscribes.push(membersUnsubscribe);
+      try {
+        const membersUnsubscribe = firestoreService.subscribeToMembers((newMembers) => {
+          console.log('メンバーデータ更新:', newMembers.length + '人');
+          setMembers(newMembers);
+          setDataLoading(false); // 最初のデータが読み込まれたらローディング終了
+        });
+        unsubscribes.push(membersUnsubscribe);
 
-      const attendanceUnsubscribe = firestoreService.subscribeToAttendance((newAttendance) => {
-        console.log('出席データ更新:', Object.keys(newAttendance).length + '日分');
-        setAttendance(newAttendance);
-      });
-      unsubscribes.push(attendanceUnsubscribe);
+        const attendanceUnsubscribe = firestoreService.subscribeToAttendance((newAttendance) => {
+          console.log('出席データ更新:', Object.keys(newAttendance).length + '日分');
+          setAttendance(newAttendance);
+        });
+        unsubscribes.push(attendanceUnsubscribe);
 
-      const notesUnsubscribe = firestoreService.subscribeToNotes((newNotes) => {
-        console.log('メモデータ更新:', newNotes.length + '件');
-        setNotes(newNotes);
-      });
-      unsubscribes.push(notesUnsubscribe);
+        const notesUnsubscribe = firestoreService.subscribeToNotes((newNotes) => {
+          console.log('メモデータ更新:', newNotes.length + '件');
+          setNotes(newNotes);
+        });
+        unsubscribes.push(notesUnsubscribe);
 
-      const connectionUnsubscribe = firestoreService.subscribeToConnectionStatus((connected) => {
-        setIsConnected(connected);
-      });
-      unsubscribes.push(connectionUnsubscribe);
+        const connectionUnsubscribe = firestoreService.subscribeToConnectionStatus((connected) => {
+          setIsConnected(connected);
+        });
+        unsubscribes.push(connectionUnsubscribe);
+        
+        // データ購読開始後、一定時間でローディングを終了（フォールバック）
+        setTimeout(() => {
+          if (dataLoading) {
+            console.log('タイムアウトによりローディングを終了します');
+            setDataLoading(false);
+          }
+        }, 5000); // 5秒後
+        
+      } catch (error) {
+        console.error('データ購読エラー:', error);
+        setDataLoading(false);
+        toast.error('データの購読に失敗しました。同期ボタンをお試しください。');
+      }
     };
 
     return () => {

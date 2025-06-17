@@ -320,40 +320,61 @@ export class FirestoreService {
   private async performInitialization(familyId: string): Promise<void> {
     try {
       // 1. 家族データの存在確認と作成（必要に応じて）
-      const family = await this.getFamily();
-      
-      if (!family) {
-        console.log('家族データが存在しないため新規作成します');
-        await this.createFamily('我が家');
-        console.log('新しい家族データを作成しました');
-      } else {
-        console.log('既存の家族データを確認しました:', family.name);
+      try {
+        const family = await this.getFamily();
+        
+        if (!family) {
+          console.log('家族データが存在しないため新規作成します');
+          await this.createFamily('我が家');
+          console.log('新しい家族データを作成しました');
+        } else {
+          console.log('既存の家族データを確認しました:', family.name);
+        }
+      } catch (familyError) {
+        console.warn('家族データの処理でエラーが発生しましたが、メンバー確認を継続します:', familyError);
       }
       
       // 2. メンバーデータの存在確認（より確実な方法で）
-      const membersSnapshot = await getDocs(collection(db, 'families', familyId, 'members'));
-      console.log('メンバーコレクション確認 - 件数:', membersSnapshot.size);
-      
-      if (membersSnapshot.empty) {
-        console.log('メンバーが存在しないためデフォルトメンバーを作成します');
+      try {
+        const membersSnapshot = await getDocs(collection(db, 'families', familyId, 'members'));
+        console.log('メンバーコレクション確認 - 件数:', membersSnapshot.size);
         
-        // 3. 再度確認してから作成（二重作成防止）
-        const doubleCheckSnapshot = await getDocs(collection(db, 'families', familyId, 'members'));
-        if (doubleCheckSnapshot.empty) {
-          await this.initializeDefaultDataSafely(familyId);
-          console.log('デフォルトメンバーを作成しました');
+        if (membersSnapshot.empty) {
+          console.log('メンバーが存在しないためデフォルトメンバーを作成します');
+          
+          // 3. 再度確認してから作成（二重作成防止）
+          const doubleCheckSnapshot = await getDocs(collection(db, 'families', familyId, 'members'));
+          if (doubleCheckSnapshot.empty) {
+            await this.initializeDefaultDataSafely(familyId);
+            console.log('デフォルトメンバーを作成しました');
+          } else {
+            console.log('二重確認で既存メンバーが見つかりました。作成をスキップします。');
+          }
         } else {
-          console.log('二重確認で既存メンバーが見つかりました。作成をスキップします。');
+          console.log(`既存のメンバー ${membersSnapshot.size}人を確認しました`);
+          membersSnapshot.forEach(doc => {
+            const member = doc.data();
+            console.log('- 既存メンバー:', member.name, '(order:', member.order, ')');
+          });
         }
-      } else {
-        console.log(`既存のメンバー ${membersSnapshot.size}人を確認しました`);
-        membersSnapshot.forEach(doc => {
-          const member = doc.data();
-          console.log('- 既存メンバー:', member.name, '(order:', member.order, ')');
-        });
+      } catch (memberError) {
+        console.error('メンバーデータの処理でエラーが発生しました:', memberError);
+        // メンバー関連のエラーは重要なので再スロー
+        throw memberError;
       }
     } catch (error) {
-      console.error('家族データの確認・作成エラー:', error);
+      console.error('初期化処理でエラーが発生しました:', error);
+      // 致命的でないエラーの場合は警告のみ
+      if (error instanceof Error) {
+        if (error.message.includes('offline') || error.message.includes('network')) {
+          console.warn('ネットワークエラーのため初期化をスキップします');
+          return; // ネットワークエラーは無視
+        }
+        if (error.message.includes('already-exists')) {
+          console.log('データは既に存在しています');
+          return; // 既存データがある場合は正常
+        }
+      }
       throw error;
     }
   }
@@ -363,6 +384,7 @@ export class FirestoreService {
     
     // 一意な初期化フラグドキュメントを使用して重複作成を防ぐ
     const initFlagRef = doc(db, 'families', familyId, 'system', 'initialization');
+    let shouldProceed = false;
     
     try {
       // 初期化フラグを原子的に設定（既に存在する場合は失敗）
@@ -373,26 +395,50 @@ export class FirestoreService {
       }, { merge: false }); // merge: false で既存ドキュメントがあれば失敗
       
       console.log('初期化フラグを設定しました');
+      shouldProceed = true;
       
     } catch (error: any) {
-      // 初期化フラグが既に存在する場合（他のプロセスが初期化中）
-      if (error.code === 'already-exists' || error.message?.includes('already exists')) {
-        console.log('他のプロセスが既に初期化中です。処理をスキップします。');
-        return;
-      }
+      console.log('初期化フラグ設定時のエラー:', error);
       
       // フラグの存在確認
-      const flagDoc = await getDoc(initFlagRef);
-      if (flagDoc.exists()) {
-        console.log('初期化フラグが既に存在します。処理をスキップします。');
-        return;
+      try {
+        const flagDoc = await getDoc(initFlagRef);
+        if (flagDoc.exists()) {
+          const flagData = flagDoc.data();
+          console.log('初期化フラグが既に存在します:', flagData);
+          
+          // 初期化が完了済みの場合はスキップ
+          if (flagData.status === 'completed') {
+            console.log('初期化は既に完了しています。処理をスキップします。');
+            return;
+          }
+          
+          // 初期化中の場合も基本的にはスキップ
+          console.log('他のプロセスが初期化中です。処理をスキップします。');
+          return;
+        } else {
+          // フラグが存在しない場合は処理を続行
+          console.log('フラグが存在しないため、処理を続行します');
+          shouldProceed = true;
+        }
+      } catch (checkError) {
+        console.warn('フラグ確認でエラーが発生しましたが、処理を続行します:', checkError);
+        shouldProceed = true;
       }
-      
-      // 予期しないエラーの場合は再試行
-      console.warn('初期化フラグ設定でエラーが発生しましたが、処理を続行します:', error);
+    }
+
+    if (!shouldProceed) {
+      return;
     }
 
     try {
+      // 最終確認：メンバーが本当に存在しないか確認
+      const finalCheck = await getDocs(collection(db, 'families', familyId, 'members'));
+      if (!finalCheck.empty) {
+        console.log('最終確認でメンバーが見つかりました。作成をスキップします。');
+        return;
+      }
+
       // デフォルトメンバーを作成
       const batch = writeBatch(db);
       const defaultMembers = [
@@ -413,12 +459,17 @@ export class FirestoreService {
       console.log('デフォルトメンバーのバッチ作成完了');
       
       // 初期化完了フラグを更新
-      await updateDoc(initFlagRef, {
-        status: 'completed',
-        completedAt: serverTimestamp()
-      });
+      try {
+        await updateDoc(initFlagRef, {
+          status: 'completed',
+          completedAt: serverTimestamp()
+        });
+      } catch (updateError) {
+        console.warn('完了フラグの更新に失敗しましたが、処理は正常に完了しました:', updateError);
+      }
       
     } catch (error) {
+      console.error('メンバー作成でエラーが発生しました:', error);
       // 初期化失敗時はフラグを削除
       try {
         await deleteDoc(initFlagRef);
