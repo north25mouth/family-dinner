@@ -111,13 +111,13 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
         {/* ヘッダー */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-3 sm:p-4 lg:p-6 border-b border-gray-200">
           <div className="flex items-center">
-            <Users className="w-6 h-6 text-primary-600 mr-2" />
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+            <Users className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600 mr-2" />
+            <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-900">
               メンバー管理
             </h2>
           </div>
@@ -125,17 +125,17 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <X size={20} />
+            <X size={18} className="sm:w-5 sm:h-5" />
           </button>
         </div>
 
         {/* メンバーリスト */}
-        <div className="p-4 sm:p-6">
-          <div className="space-y-4">
+        <div className="p-3 sm:p-4 lg:p-6">
+          <div className="space-y-3 sm:space-y-4">
             {members.map((member) => (
               <div
                 key={member.id}
-                className="p-4 bg-gray-50 rounded-lg"
+                className="p-3 sm:p-4 bg-gray-50 rounded-lg"
               >
                 {editingId === member.id && editingMember ? (
                   // 編集モード - スマホ対応の縦レイアウト
@@ -175,19 +175,19 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({
                       </select>
                     </div>
                     
-                    <div className="flex space-x-2">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
                       <button
                         onClick={handleUpdateMember}
-                        className="flex-1 flex items-center justify-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                        className="flex items-center justify-center px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors min-h-[40px]"
                       >
-                        <Save size={16} className="mr-2" />
+                        <Save size={14} className="mr-1.5" />
                         <span className="text-sm font-medium">保存</span>
                       </button>
                       <button
                         onClick={cancelEditing}
-                        className="flex-1 flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                        className="flex items-center justify-center px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors min-h-[40px]"
                       >
-                        <X size={16} className="mr-2" />
+                        <X size={14} className="mr-1.5" />
                         <span className="text-sm font-medium">キャンセル</span>
                       </button>
                     </div>
@@ -228,7 +228,7 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({
 
             {/* 新規追加フォーム - スマホ対応の縦レイアウト */}
             {isAdding && (
-              <div className="p-4 bg-primary-50 rounded-lg border-2 border-primary-200">
+              <div className="p-3 sm:p-4 bg-primary-50 rounded-lg border-2 border-primary-200">
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3">
                     <div
@@ -260,19 +260,19 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({
                     </select>
                   </div>
                   
-                  <div className="flex space-x-2">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
                     <button
                       onClick={handleAddMember}
-                      className="flex-1 flex items-center justify-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                      className="flex items-center justify-center px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors min-h-[40px]"
                     >
-                      <Save size={16} className="mr-2" />
+                      <Save size={14} className="mr-1.5" />
                       <span className="text-sm font-medium">追加</span>
                     </button>
                     <button
                       onClick={() => setIsAdding(false)}
-                      className="flex-1 flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                      className="flex items-center justify-center px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors min-h-[40px]"
                     >
-                      <X size={16} className="mr-2" />
+                      <X size={14} className="mr-1.5" />
                       <span className="text-sm font-medium">キャンセル</span>
                     </button>
                   </div>
@@ -301,9 +301,9 @@ export const MemberManagement: React.FC<MemberManagementProps> = ({
         </div>
 
         {/* 注意事項 */}
-        <div className="px-4 sm:px-6 pb-4 sm:pb-6">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <div className="text-sm text-yellow-800">
+        <div className="px-3 sm:px-4 lg:px-6 pb-3 sm:pb-4 lg:pb-6">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4">
+            <div className="text-xs sm:text-sm text-yellow-800">
               <strong>⚠️ 注意事項</strong>
               <ul className="mt-2 list-disc list-inside space-y-1">
                 <li>メンバーを削除すると、そのメンバーの出席データも削除されます</li>

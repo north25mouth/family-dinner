@@ -18,7 +18,7 @@ import { auth } from './config/firebase';
 import { firestoreService } from './services/firestoreService';
 import { getPreviousWeek, getNextWeek, formatDate } from './utils/dateUtils';
 import toast, { Toaster } from 'react-hot-toast';
-import { Users, HelpCircle, LogOut } from 'lucide-react';
+import { Users, HelpCircle, LogOut, RefreshCw } from 'lucide-react';
 
 function App() {
   // 認証状態
@@ -180,7 +180,21 @@ function App() {
     window.open('/usage.html', '_blank');
   };
 
-
+  const handleSync = async () => {
+    if (!user) return;
+    
+    try {
+      setDataLoading(true);
+      toast.loading('データを同期中...', { id: 'sync' });
+      
+      // ページをリロードしてデータを再取得
+      window.location.reload();
+    } catch (error: any) {
+      console.error('同期エラー:', error);
+      toast.error('同期に失敗しました', { id: 'sync' });
+      setDataLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -234,6 +248,15 @@ function App() {
             </div>
             <div className="flex items-center space-x-3">
               <ConnectionStatus isConnected={isConnected} />
+              <button
+                onClick={handleSync}
+                className="flex items-center px-2 sm:px-3 py-1 sm:py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm"
+                title="データを同期"
+                disabled={dataLoading}
+              >
+                <RefreshCw size={16} className={`sm:mr-1 ${dataLoading ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">同期</span>
+              </button>
               <div className="flex items-center text-sm text-gray-600">
                 <Users size={16} className="mr-1" />
                 <span className="hidden sm:inline">
