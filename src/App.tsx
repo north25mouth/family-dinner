@@ -12,6 +12,8 @@ import { MemberManagement } from './components/MemberManagement';
 import { NoteModal } from './components/NoteModal';
 import { ConnectionStatus } from './components/ConnectionStatus';
 import { AuthComponent } from './components/AuthComponent';
+import { Footer } from './components/Footer';
+import { SubPage } from './components/SubPages';
 
 import { onAuthStateChanged, User, signOut } from 'firebase/auth';
 import { auth } from './config/firebase';
@@ -51,6 +53,9 @@ function App() {
   const [showFirstLoginHelp, setShowFirstLoginHelp] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [isFirstTimeUser, setIsFirstTimeUser] = useState(false);
+
+  // ページ遷移処理
+  const [currentPage, setCurrentPage] = useState('main');
 
   // デフォルトメンバーかどうかを判定する関数
   const isDefaultMemberSet = (members: FamilyMember[]): boolean => {
@@ -288,12 +293,19 @@ function App() {
     return notes.filter(note => note.date === date);
   };
 
-  const handleShowUsage = () => {
-    // 使い方ページを新しいタブで開く
-    window.open('/usage.html', '_blank');
+  // ページ遷移処理
+  const handlePageChange = (page: string) => {
+    setCurrentPage(page);
   };
 
+  const handleBackToMain = () => {
+    setCurrentPage('main');
+  };
 
+  // 使い方ページを新しいタブで開く
+  const handleShowUsage = () => {
+    window.open('/usage.html', '_blank');
+  };
 
   const handleLogout = async () => {
     try {
@@ -346,6 +358,11 @@ function App() {
   // 未認証の場合は認証画面を表示
   if (!user) {
     return <AuthComponent user={user} onAuthStateChange={setUser} />;
+  }
+
+  // サブページ表示
+  if (currentPage !== 'main') {
+    return <SubPage currentPage={currentPage} onBack={handleBackToMain} />;
   }
 
   const today = formatDate(new Date());
@@ -567,6 +584,7 @@ function App() {
           }}
         />
       </div>
+      <Footer onPageChange={handlePageChange} />
     </div>
   );
 }

@@ -334,6 +334,26 @@ export const AuthComponent: React.FC<AuthComponentProps> = ({
           </ul>
         </div>
       </div>
+
+      {/* 家族共有説明 */}
+      <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="text-sm text-green-800">
+          <strong>👨‍👩‍👧‍👦 家族での使い方</strong>
+          <div className="mt-2">
+            <p className="mb-2">
+              <span className="font-medium">同じアカウントを家族で共有できます！</span>
+            </p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>お父さん、お母さん、お子さんが同じユーザー名・パスワードでログイン</li>
+              <li>誰かが予定を変更すると、家族全員のデバイスに即座に反映</li>
+              <li>外出先からでも家族の夕飯予定を確認・更新可能</li>
+            </ul>
+            <div className="mt-2 text-xs text-green-600">
+              💡 例：ユーザー名「田中家」、パスワード「tanaka2024」を家族全員で使用
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }; 
