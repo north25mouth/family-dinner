@@ -7,6 +7,7 @@ import {
   deleteDoc,
   setDoc,
   getDoc,
+  getDocs,
   query,
   where,
   orderBy,
@@ -138,12 +139,20 @@ export class FirestoreService {
       collection(db, 'families', familyId, 'attendance'),
       where('memberId', '==', memberId)
     );
+    const attendanceDocs = await getDocs(attendanceQuery);
+    attendanceDocs.forEach((docSnap) => {
+      batch.delete(docSnap.ref);
+    });
     
     // そのメンバーのメモを削除
     const notesQuery = query(
       collection(db, 'families', familyId, 'notes'),
       where('memberId', '==', memberId)
     );
+    const notesDocs = await getDocs(notesQuery);
+    notesDocs.forEach((docSnap) => {
+      batch.delete(docSnap.ref);
+    });
 
     await batch.commit();
   }
@@ -250,17 +259,26 @@ export class FirestoreService {
 
   async getConnectionStatus(): Promise<boolean> {
     try {
-      const testDoc = await getDoc(doc(db, '.info/connected'));
-      return testDoc.exists();
+      // Firestoreの接続テスト用に軽量なクエリを実行
+      const familyId = this.getUserFamilyId();
+      await getDoc(doc(db, 'families', familyId));
+      return true;
     } catch (error) {
       return false;
     }
   }
 
   subscribeToConnectionStatus(callback: (connected: boolean) => void): Unsubscribe {
-    return onSnapshot(doc(db, '.info/connected'), (doc) => {
-      callback(doc.exists());
-    });
+    // Firestoreでは定期的に接続テストを実行
+    const interval = setInterval(async () => {
+      const connected = await this.getConnectionStatus();
+      callback(connected);
+    }, 10000); // 10秒間隔
+
+    // 初回実行
+    this.getConnectionStatus().then(callback);
+
+    return () => clearInterval(interval);
   }
 
   // ========== Utilities ==========
@@ -276,6 +294,35 @@ export class FirestoreService {
 
   // ========== Batch Operations ==========
 
+  async ensureFamilyExists(): Promise<void> {
+    const familyId = this.getUserFamilyId();
+    
+    try {
+      // 家族データの存在確認
+      const family = await this.getFamily();
+      
+      if (!family) {
+        // 家族データが存在しない場合のみ作成
+        await this.createFamily('我が家');
+        console.log('新しい家族データを作成しました');
+      }
+      
+      // メンバーデータの存在確認
+      const membersSnapshot = await getDocs(collection(db, 'families', familyId, 'members'));
+      
+      if (membersSnapshot.empty) {
+        // メンバーが存在しない場合のみデフォルトメンバーを作成
+        await this.initializeDefaultData();
+        console.log('デフォルトメンバーを作成しました');
+      } else {
+        console.log(`既存のメンバー ${membersSnapshot.size}人を確認しました`);
+      }
+    } catch (error) {
+      console.error('家族データの確認・作成エラー:', error);
+      throw error;
+    }
+  }
+
   async initializeDefaultData(): Promise<void> {
     const familyId = this.getUserFamilyId();
     const batch = writeBatch(db);
@@ -288,12 +335,10 @@ export class FirestoreService {
       { name: '花子', color: '#F59E0B', order: 4 },
     ];
 
-    defaultMembers.forEach((member, index) => {
+    defaultMembers.forEach((member) => {
       const memberRef = doc(collection(db, 'families', familyId, 'members'));
       batch.set(memberRef, member);
     });
-
-
 
     await batch.commit();
   }
