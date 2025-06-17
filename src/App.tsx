@@ -37,7 +37,9 @@ function App() {
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [selectedDateForNote, setSelectedDateForNote] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(true);
-
+  
+  // 初期化状態の管理
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Firebase認証の監視とデータ購読
   useEffect(() => {
@@ -52,44 +54,29 @@ function App() {
       setAuthLoading(false);
       
       if (user) {
+        // 同一ユーザーで既に初期化済みの場合はスキップ
+        const currentUserId = user.uid;
+        
         // Firestoreサービスにユーザーを設定
         firestoreService.setUser(user);
         setDataLoading(true);
+        setIsInitialized(false);
         
         // 家族データの初期化（必要な場合のみ）
         try {
+          console.log('家族データの初期化を開始します - ユーザー:', currentUserId);
           await firestoreService.ensureFamilyExists();
           console.log('家族データの確認・初期化完了');
+          setIsInitialized(true);
           
           // データ購読を開始
-          const membersUnsubscribe = firestoreService.subscribeToMembers((newMembers) => {
-            console.log('メンバーデータ更新:', newMembers.length + '人');
-            setMembers(newMembers);
-            setDataLoading(false); // 最初のデータが読み込まれたらローディング終了
-          });
-          unsubscribes.push(membersUnsubscribe);
-
-          const attendanceUnsubscribe = firestoreService.subscribeToAttendance((newAttendance) => {
-            console.log('出席データ更新:', Object.keys(newAttendance).length + '日分');
-            setAttendance(newAttendance);
-          });
-          unsubscribes.push(attendanceUnsubscribe);
-
-          const notesUnsubscribe = firestoreService.subscribeToNotes((newNotes) => {
-            console.log('メモデータ更新:', newNotes.length + '件');
-            setNotes(newNotes);
-          });
-          unsubscribes.push(notesUnsubscribe);
-
-          const connectionUnsubscribe = firestoreService.subscribeToConnectionStatus((connected) => {
-            setIsConnected(connected);
-          });
-          unsubscribes.push(connectionUnsubscribe);
+          await startDataSubscription();
 
         } catch (error) {
           console.error('家族データの確認エラー:', error);
           toast.error('データの読み込みに失敗しました');
           setDataLoading(false);
+          setIsInitialized(false);
         }
       } else {
         // ログアウト時のクリーンアップ
@@ -98,14 +85,42 @@ function App() {
         setAttendance({});
         setNotes([]);
         setDataLoading(false);
+        setIsInitialized(false);
       }
     });
+
+    // データ購読関数を定義
+    const startDataSubscription = async () => {
+      const membersUnsubscribe = firestoreService.subscribeToMembers((newMembers) => {
+        console.log('メンバーデータ更新:', newMembers.length + '人');
+        setMembers(newMembers);
+        setDataLoading(false); // 最初のデータが読み込まれたらローディング終了
+      });
+      unsubscribes.push(membersUnsubscribe);
+
+      const attendanceUnsubscribe = firestoreService.subscribeToAttendance((newAttendance) => {
+        console.log('出席データ更新:', Object.keys(newAttendance).length + '日分');
+        setAttendance(newAttendance);
+      });
+      unsubscribes.push(attendanceUnsubscribe);
+
+      const notesUnsubscribe = firestoreService.subscribeToNotes((newNotes) => {
+        console.log('メモデータ更新:', newNotes.length + '件');
+        setNotes(newNotes);
+      });
+      unsubscribes.push(notesUnsubscribe);
+
+      const connectionUnsubscribe = firestoreService.subscribeToConnectionStatus((connected) => {
+        setIsConnected(connected);
+      });
+      unsubscribes.push(connectionUnsubscribe);
+    };
 
     return () => {
       authUnsubscribe();
       unsubscribes.forEach(unsubscribe => unsubscribe());
     };
-  }, []);
+  }, []); // 依存配列を空にして、マウント時のみ実行
 
   const handlePreviousWeek = () => {
     setCurrentDate(getPreviousWeek(currentDate));
