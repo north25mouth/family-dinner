@@ -14,6 +14,7 @@ import { ConnectionStatus } from './components/ConnectionStatus';
 import { AuthComponent } from './components/AuthComponent';
 import { Footer } from './components/Footer';
 import { SubPage } from './components/SubPages';
+import { AccountDeletionSection } from './components/AccountDeletionSection';
 
 import { onAuthStateChanged, User, signOut } from 'firebase/auth';
 import { auth } from './config/firebase';
@@ -56,6 +57,11 @@ function App() {
 
   // ページ遷移処理
   const [currentPage, setCurrentPage] = useState('main');
+
+  // Auth状態の変更をハンドリング
+  const handleAuthChange = (newUser: User | null) => {
+    setUser(newUser);
+  };
 
   // デフォルトメンバーかどうかを判定する関数
   const isDefaultMemberSet = (members: FamilyMember[]): boolean => {
@@ -357,7 +363,7 @@ function App() {
 
   // 未認証の場合は認証画面を表示
   if (!user) {
-    return <AuthComponent user={user} onAuthStateChange={setUser} />;
+    return <AuthComponent user={user} onAuthStateChange={handleAuthChange} />;
   }
 
   // サブページ表示
@@ -368,223 +374,133 @@ function App() {
   const today = formatDate(new Date());
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
-      <div className="max-w-6xl mx-auto px-2 sm:px-4 py-3 sm:py-6">
-        {/* ヘッダー */}
-        <header className="bg-white rounded-lg shadow-sm mb-3 sm:mb-6 p-3 sm:p-6">
-          <div className="flex justify-between items-center">
-            <div>
-                              <h1 className="text-lg sm:text-2xl font-bold text-gray-900">家族の夜ご飯スケジュール</h1>
-                              <p className="text-gray-600 mt-1 text-sm sm:text-base">みんなで夜ご飯を管理しよう</p>
-            </div>
-            <div className="flex items-center space-x-3">
+    <div className="bg-gray-50 min-h-screen flex flex-col">
+      <div className="flex-grow">
+        <Toaster position="top-center" reverseOrder={false} />
+        
+        <header className="bg-white shadow-sm sticky top-0 z-10">
+          <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div className="flex items-center">
+              <h1 className="text-xl md:text-2xl font-bold text-gray-800">
+                🍽️ 家族の夜ご飯予定
+              </h1>
               <ConnectionStatus isConnected={isOnline} />
-              <button
-                onClick={handleShowUsage}
-                className={`flex items-center px-2 sm:px-3 py-1 sm:py-2 rounded-lg transition-colors text-sm ${
-                  showTutorial && isFirstTimeUser
-                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-300'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-                title={showTutorial && isFirstTimeUser ? '詳しい使い方はこちら' : '使い方'}
-              >
-                <HelpCircle size={16} className={`sm:mr-1 ${showTutorial && isFirstTimeUser ? 'text-blue-600' : ''}`} />
-                <span className="hidden sm:inline">
-                  使い方
-                </span>
-                {showTutorial && isFirstTimeUser && <span className="ml-1 text-blue-600">📖</span>}
-              </button>
-              <div className="flex items-center text-sm text-gray-600">
-                <Users size={16} className="mr-1" />
-                <span className="hidden sm:inline">
-                  {user?.displayName || 'ゲストユーザー'}
-                </span>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="flex items-center px-2 sm:px-3 py-1 sm:py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm"
-                title="ログアウト"
-              >
-                <LogOut size={16} className="sm:mr-1" />
-                <span className="hidden sm:inline">ログアウト</span>
-              </button>
             </div>
-          </div>
-
-          {/* チュートリアル用バナー（初回ユーザー） */}
-          {showTutorial && isDefaultMemberSet(members) && isFirstTimeUser && (
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-3 sm:mb-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="h-5 w-5 text-orange-400">🍽️</div>
-                </div>
-                <div className="ml-3 flex-1">
-                  <h3 className="text-sm font-medium text-orange-800">
-                    夕飯予定管理へようこそ！
-                  </h3>
-                  <div className="mt-1 text-sm text-orange-700">
-                    <p>
-                      家族の夕飯スケジュールを簡単に管理できます。まずは上の
-                      <span className="font-semibold text-orange-800">「メンバー管理」タブ</span>
-                      をクリックして、ご家族のメンバーを登録してください。
-                    </p>
-                  </div>
-                  <div className="mt-2 text-xs text-orange-600">
-                    💡 ヒント：メンバー登録後は、カレンダーで出席予定を管理できます
-                  </div>
-                </div>
-                <div className="ml-3 flex-shrink-0">
-                  <button
-                    onClick={() => handleTabChange('members')}
-                    className="bg-orange-600 text-white px-3 py-1 rounded text-sm hover:bg-orange-700 transition-colors"
-                  >
-                    メンバー管理へ
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* データ読み込み中の表示 */}
-          {dataLoading && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-3 sm:mb-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="h-5 w-5 text-blue-400 animate-spin">⏳</div>
-                </div>
-                <div className="ml-3 flex-1">
-                  <h3 className="text-sm font-medium text-blue-800">
-                    データを読み込み中...
-                  </h3>
-                  <div className="mt-1 text-sm text-blue-700">
-                    <p>
-                      ご家族のメンバーと予定データを取得しています。初回ログイン時は少し時間がかかる場合があります。
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* タブナビゲーション */}
-          <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mt-4 sm:mt-6">
-            <button
-              onClick={() => handleTabChange('calendar')}
-              className={`flex items-center px-3 sm:px-4 py-2 rounded-lg transition-colors text-xs sm:text-sm ${
-                currentTab === 'calendar'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              カレンダー
-            </button>
-            <button
-              onClick={() => handleTabChange('members')}
-              className={`flex items-center px-3 sm:px-4 py-2 rounded-lg transition-colors text-xs sm:text-sm ${
-                currentTab === 'members'
-                  ? 'bg-blue-600 text-white'
-                  : showTutorial && isFirstTimeUser
-                  ? 'bg-orange-100 text-orange-700 hover:bg-orange-200 animate-pulse border-2 border-orange-300'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-              title={showTutorial && isFirstTimeUser ? 'ここをクリックしてメンバー管理を始めましょう！' : 'メンバー管理'}
-            >
-              <Users size={14} className={`mr-1 sm:w-4 sm:h-4 ${showTutorial && isFirstTimeUser ? 'text-orange-600' : ''}`} />
-              <span className="hidden sm:inline">メンバー管理</span>
-              <span className="sm:hidden">メンバー</span>
-              {showTutorial && isFirstTimeUser && <span className="ml-1 text-orange-600">👆</span>}
-            </button>
-
-            <button
-              onClick={handleShowUsage}
-              className={`flex items-center px-3 sm:px-4 py-2 rounded-lg transition-colors text-xs sm:text-sm ${
-                showTutorial && isFirstTimeUser
-                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-300'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-              title={showTutorial && isFirstTimeUser ? '詳しい使い方はこちら' : '使い方'}
-            >
-              <HelpCircle size={14} className={`mr-1 sm:w-4 sm:h-4 ${showTutorial && isFirstTimeUser ? 'text-blue-600' : ''}`} />
-              <span className="hidden sm:inline">使い方</span>
-              <span className="sm:hidden">ヘルプ</span>
-              {showTutorial && isFirstTimeUser && <span className="ml-1 text-blue-600">📖</span>}
-            </button>
           </div>
         </header>
 
-        {/* 週間ナビゲーション */}
-        {currentTab === 'calendar' && (
-          <WeekNavigation
-            currentDate={currentDate}
-            onPreviousWeek={handlePreviousWeek}
-            onNextWeek={handleNextWeek}
-          />
-        )}
+        <main className="container mx-auto p-4">
+          <AuthComponent user={user} onAuthStateChange={handleAuthChange} />
+          
+          {authLoading ? (
+            <div className="text-center p-8">
+              <p className="text-gray-600">読み込み中...</p>
+            </div>
+          ) : user ? (
+            <>
+              {currentPage === 'main' ? (
+                <>
+                  <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-6">
+                    <button
+                      onClick={() => handleTabChange('calendar')}
+                      className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
+                        currentTab === 'calendar'
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      <Calendar size={16} className="mr-2" />
+                      カレンダー
+                    </button>
+                    <button
+                      onClick={() => handleTabChange('members')}
+                      className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium flex items-center ${
+                        currentTab === 'members'
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      <Users size={16} className="mr-2" />
+                      メンバー管理
+                    </button>
+                    <button
+                      onClick={handleShowUsage}
+                      className="px-4 py-2 rounded-lg transition-colors text-sm font-medium flex items-center bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    >
+                      <HelpCircle size={16} className="mr-2" />
+                      使い方
+                    </button>
+                  </div>
 
-        {/* メインコンテンツ */}
-        {currentTab === 'calendar' && (
-          <>
-            <WeeklyCalendar
-              currentDate={currentDate}
-              members={members}
-              attendance={weeklyAttendance}
-              notes={notes}
-              onAttendanceChange={handleAttendanceChange}
-              onShowNotes={handleShowNotes}
-            />
+                  {currentTab === 'calendar' && (
+                    <>
+                      <WeekNavigation
+                        currentDate={currentDate}
+                        onPreviousWeek={handlePreviousWeek}
+                        onNextWeek={handleNextWeek}
+                      />
+                      <WeeklyCalendar
+                        currentDate={currentDate}
+                        members={members}
+                        attendance={weeklyAttendance}
+                        notes={notes}
+                        onAttendanceChange={handleAttendanceChange}
+                        onShowNotes={handleShowNotes}
+                      />
+                       <div className="mt-4">
+                        <DailySummary attendance={weeklyAttendance} members={members} currentDate={currentDate} />
+                      </div>
+                    </>
+                  )}
 
-            <DailySummary
-              currentDate={new Date()}
-              members={members}
-              attendance={weeklyAttendance}
-            />
-          </>
-        )}
+                  {currentTab === 'members' && (
+                    <MemberManagement
+                      members={members}
+                      onAddMember={handleAddMember}
+                      onUpdateMember={handleUpdateMember}
+                      onDeleteMember={handleDeleteMember}
+                      onClose={() => handleTabChange('calendar')}
+                    />
+                  )}
+                </>
+              ) : (
+                <SubPage currentPage={currentPage} onBack={handleBackToMain} />
+              )}
+            </>
+          ) : (
+            <div className="text-center p-8 bg-white rounded-lg shadow">
+              <h2 className="text-xl font-bold mb-4">ようこそ！</h2>
+              <p className="text-gray-600">
+                ログインまたはアカウントを作成して、家族の予定を共有しましょう。
+              </p>
+            </div>
+          )}
+        </main>
+      </div>
 
-        {currentTab === 'members' && (
-          <MemberManagement
-            members={members}
-            onAddMember={handleAddMember}
-            onUpdateMember={handleUpdateMember}
-            onDeleteMember={handleDeleteMember}
-            onClose={() => setCurrentTab('calendar')}
-          />
-        )}
+      <AccountDeletionSection user={user} onAuthStateChange={handleAuthChange} />
+      <Footer onPageChange={handlePageChange} />
 
-        {/* モーダル */}
-        {showNoteModal && selectedDateForNote && (
-          <NoteModal
-            date={selectedDateForNote}
-            members={members}
-            notes={getNotesForDate(selectedDateForNote)}
-            onAddNote={async (note) => {
-              await handleAddNote(note.memberId, note.date, note.text);
-            }}
-            onUpdateNote={async () => {
-              // TODO: 更新実装
-            }}
-            onDeleteNote={async () => {
-              // TODO: 削除実装
-            }}
-            onClose={() => {
-              setShowNoteModal(false);
-              setSelectedDateForNote(null);
-            }}
-          />
-        )}
-
-        <Toaster 
-          position="top-right"
-          toastOptions={{
-            duration: 3000,
-            style: {
-              background: '#363636',
-              color: '#fff',
-            },
+      {showNoteModal && selectedDateForNote && (
+        <NoteModal
+          date={selectedDateForNote}
+          members={members}
+          notes={getNotesForDate(selectedDateForNote)}
+          onAddNote={async (note) => {
+            await handleAddNote(note.memberId, note.date, note.text);
+          }}
+          onUpdateNote={async () => {
+            // TODO: 更新実装
+          }}
+          onDeleteNote={async () => {
+            // TODO: 削除実装
+          }}
+          onClose={() => {
+            setShowNoteModal(false);
+            setSelectedDateForNote(null);
           }}
         />
-      </div>
-      <Footer onPageChange={handlePageChange} />
+      )}
     </div>
   );
 }

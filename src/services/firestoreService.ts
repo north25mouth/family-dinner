@@ -16,8 +16,8 @@ import {
   writeBatch,
   serverTimestamp
 } from 'firebase/firestore';
-import { User } from 'firebase/auth';
-import { db } from '../config/firebase';
+import { User, deleteUser } from 'firebase/auth';
+import { db, auth } from '../config/firebase';
 import { 
   FamilyMember, 
   AttendanceRecord, 
@@ -486,6 +486,81 @@ export class FirestoreService {
     this.user = null;
     this.familyId = null;
     this.initializationPromise = null; // 初期化状態もリセット
+  }
+
+  // ========== User Account ==========
+
+  async deleteUserAccount(username: string, password_raw: string): Promise<boolean> {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('username', '==', username));
+    
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      console.log('User not found');
+      return false; // ユーザーが見つからない
+    }
+
+    const userDoc = snapshot.docs[0];
+    const userData = userDoc.data();
+
+    if (userData.password !== password_raw) {
+      console.log('Incorrect password');
+      return false; // パスワードが違う
+    }
+    
+    // Firestoreのユーザードキュメントを削除
+    await deleteDoc(userDoc.ref);
+
+    // 関連するFamilyデータを削除
+    const familyId = `family_${username}`;
+    const familyDocRef = doc(db, 'families', familyId);
+    
+    // Familyドキュメントが存在するか確認
+    const familyDocSnap = await getDoc(familyDocRef);
+
+    if (familyDocSnap.exists()) {
+      // サブコレクションも削除する必要がある
+      const membersCollectionRef = collection(familyDocRef, 'members');
+      const attendanceCollectionRef = collection(familyDocRef, 'attendance');
+      const notesCollectionRef = collection(familyDocRef, 'notes');
+      const systemCollectionRef = collection(familyDocRef, 'system');
+
+      const deleteCollection = async (collectionRef: any) => {
+          const querySnapshot = await getDocs(collectionRef);
+          if (querySnapshot.empty) return; // コレクションが空なら何もしない
+          const batch = writeBatch(db);
+          querySnapshot.forEach((doc) => {
+              batch.delete(doc.ref);
+          });
+          await batch.commit();
+      };
+
+      try {
+        await deleteCollection(membersCollectionRef);
+        await deleteCollection(attendanceCollectionRef);
+        await deleteCollection(notesCollectionRef);
+        await deleteCollection(systemCollectionRef);
+    
+        // Familyドキュメント本体を削除
+        await deleteDoc(familyDocRef);
+      } catch(e) {
+        console.error("Error deleting family data:", e);
+        // エラーが発生しても、Authユーザーの削除は試みる
+      }
+    }
+
+    // Firebase Authからユーザーを削除 (現在ログインしているユーザー)
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      try {
+        await deleteUser(currentUser);
+      } catch (error) {
+        console.error("Error deleting auth user:", error);
+      }
+    }
+    
+    return true;
   }
 }
 

@@ -2,37 +2,24 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // ユーザー認証情報（ユーザーネーム・パスワード）
-    match /users/{document} {
-      // 誰でも読み取り可能（ログイン時の認証のため）
-      allow read: if true;
-      // 誰でも作成可能（新規登録のため）
-      allow create: if true;
-      // 更新・削除は禁止
-      allow update, delete: if false;
+    match /users/{userId} {
+      allow read, create: if true;
+      // 認証済みのユーザーは削除可能 (クライアント側でパスワードチェックを行う前提)
+      allow delete: if request.auth != null;
+      allow update: if false; // 更新は引き続き禁止
     }
     
     // 家族データ
     match /families/{familyId} {
-      // 認証済みユーザーのみアクセス可能
-      allow read, write: if request.auth != null;
+      // 認証済みユーザーは自分のデータにアクセス可能
+      // ここでは単純化のため、認証さえされていれば許可
+      allow read, create: if request.auth != null;
+
+      // 認証済みユーザーは自分のfamilyデータを削除可能
+      allow delete: if request.auth != null;
       
-      // 家族メンバー
-      match /members/{memberId} {
-        allow read, write: if request.auth != null;
-      }
-      
-      // 出席データ
-      match /attendance/{attendanceId} {
-        allow read, write: if request.auth != null;
-      }
-      
-      // メモデータ
-      match /notes/{noteId} {
-        allow read, write: if request.auth != null;
-      }
-      
-      // 通知設定
-      match /notificationSettings/{settingId} {
+      // サブコレクションのルール
+      match /{subcollection}/{document=**} {
         allow read, write: if request.auth != null;
       }
     }

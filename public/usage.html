@@ -186,6 +186,34 @@
             color: #991b1b;
         }
         
+        .tips-p {
+            font-size: 0.9rem;
+            color: #78350f;
+            margin-top: 10px;
+        }
+        
+        .faq-item {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .faq-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .faq-item h3 {
+            font-size: 1.2rem;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .faq-item p {
+            color: #4b5563;
+        }
+        
         .back-button {
             display: inline-block;
             background: #059669;
@@ -416,6 +444,46 @@
 
         <div style="text-align: center;">
             <a href="/" class="back-button">アプリに戻る</a>
+        </div>
+
+        <div class="section">
+            <h2>🔒 アカウントの管理</h2>
+            <h3>アカウントの削除</h3>
+            <div class="warning">
+                <h4>注意：この操作は元に戻せません</h4>
+                <p>アカウントを削除すると、家族の情報、すべての出欠記録、メモなど、関連するすべてのデータが完全に削除されます。一度削除したデータは復元できませんので、ご注意ください。</p>
+            </div>
+            <div class="step">
+                <span class="step-number">1</span>
+                <div>
+                    <h3>アカウント削除ボタンをクリック</h3>
+                    <p>ログイン後、画面上部に表示されるユーザー情報欄の「アカウント削除」ボタンをクリックします。</p>
+                </div>
+            </div>
+            <div class="step">
+                <span class="step-number">2</span>
+                <div>
+                    <h3>パスワードの入力と最終確認</h3>
+                    <p>アカウント削除の確認画面が表示されます。セキュリティのため、ご自身のパスワードを入力し、「アカウントを削除」ボタンをクリックしてください。</p>
+                    <p class="tips-p">※ゲストとして利用している場合、アカウントが存在しないためこの機能は利用できません。</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🤔 よくある質問 (FAQ)</h2>
+            <div class="faq-item">
+                <h3>Q. アカウントを削除すると、家族全員のデータが消えてしまいますか？</h3>
+                <p>A. はい、アカウント（家族）を作成したユーザーがアカウントを削除すると、その家族に関連するすべてのメンバーのデータ、出欠記録、メモがすべて削除されます。</p>
+            </div>
+            <div class="faq-item">
+                <h3>Q. ゲストとして使っていましたが、データは削除できますか？</h3>
+                <p>A. ゲストユーザーのデータは、お使いのブラウザ内にのみ保存されています。アカウント登録はされていないため、サーバー上からデータを削除するという概念はありません。ブラウザのキャッシュやストレージを削除することで、データを消すことができます。</p>
+            </div>
+             <div class="faq-item">
+                <h3>Q. 間違ってアカウントを削除してしまいました。元に戻せますか？</h3>
+                <p>A. 申し訳ありませんが、一度削除されたアカウントとデータは復元することができません。</p>
+            </div>
         </div>
     </div>
 </body>

@@ -149,7 +149,7 @@ export const AuthComponent: React.FC<AuthComponentProps> = ({
   };
 
   if (user) {
-    const displayName = user.displayName || 'ゲストユーザー';
+    const displayName = user.displayName || 'ユーザー';
     return (
       <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
         <div className="flex items-center justify-between">
@@ -160,9 +160,7 @@ export const AuthComponent: React.FC<AuthComponentProps> = ({
                 {displayName}
               </div>
               <div className="text-sm text-gray-600">
-                {user.displayName 
-                  ? '全デバイスでデータが同期されます' 
-                  : 'このデバイスでのみデータが保存されます'}
+                全デバイスでデータが同期されます
               </div>
             </div>
           </div>
@@ -187,30 +185,6 @@ export const AuthComponent: React.FC<AuthComponentProps> = ({
         <p className="text-gray-600">
           家族全員で夜ご飯の出席状況を共有しましょう
         </p>
-      </div>
-
-      {/* 簡単ログイン */}
-      <div className="mb-6">
-        <button
-          onClick={handleAnonymousLogin}
-          disabled={loading}
-          className="w-full flex items-center justify-center px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
-        >
-          <Users size={20} className="mr-2" />
-          {loading ? '接続中...' : '今すぐ始める（ゲスト）'}
-        </button>
-        <p className="text-xs text-gray-500 mt-2 text-center">
-          アカウント不要でお試しいただけます
-        </p>
-      </div>
-
-      <div className="relative mb-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300" />
-        </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">または</span>
-        </div>
       </div>
 
       {/* 認証フォーム */}
