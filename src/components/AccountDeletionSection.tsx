@@ -7,26 +7,19 @@ import { FirestoreService } from '../services/firestoreService';
 
 interface AccountDeletionSectionProps {
   user: User | null;
-  onAuthStateChange: (user: User | null) => void;
+  onDeleteAccount: (password: string) => Promise<void>;
 }
 
-export const AccountDeletionSection: React.FC<AccountDeletionSectionProps> = ({ user, onAuthStateChange }) => {
+export const AccountDeletionSection: React.FC<AccountDeletionSectionProps> = ({ user, onDeleteAccount }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const handleDeleteAccount = async (password: string) => {
-    if (!user?.displayName) {
-      throw new Error('ユーザー名が見つかりません。');
-    }
-
-    const firestoreService = FirestoreService.getInstance();
-    const success = await firestoreService.deleteUserAccount(user.displayName, password);
-
-    if (success) {
-      toast.success('アカウントが正常に削除されました。');
-      onAuthStateChange(null);
+  const handleDelete = async (password: string) => {
+    try {
+      await onDeleteAccount(password);
       setIsDeleteModalOpen(false);
-    } else {
-      throw new Error('パスワードが正しくないか、アカウントの削除に失敗しました。');
+    } catch (error: any) {
+      // エラーはモーダル側で表示するため、ここでは再スロー
+      throw error;
     }
   };
 
@@ -62,7 +55,7 @@ export const AccountDeletionSection: React.FC<AccountDeletionSectionProps> = ({ 
       <DeleteAccountModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        onDelete={handleDeleteAccount}
+        onDelete={handleDelete}
         username={user.displayName}
       />
     </>

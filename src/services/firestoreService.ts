@@ -490,7 +490,7 @@ export class FirestoreService {
 
   // ========== User Account ==========
 
-  async deleteUserAccount(username: string, password_raw: string): Promise<boolean> {
+  async deleteFirestoreUserData(username: string, password_raw: string): Promise<boolean> {
     const usersRef = collection(db, 'users');
     const q = query(usersRef, where('username', '==', username));
     
@@ -547,16 +547,6 @@ export class FirestoreService {
       } catch(e) {
         console.error("Error deleting family data:", e);
         // エラーが発生しても、Authユーザーの削除は試みる
-      }
-    }
-
-    // Firebase Authからユーザーを削除 (現在ログインしているユーザー)
-    const currentUser = auth.currentUser;
-    if (currentUser) {
-      try {
-        await deleteUser(currentUser);
-      } catch (error) {
-        console.error("Error deleting auth user:", error);
       }
     }
     

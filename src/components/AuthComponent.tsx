@@ -14,11 +14,13 @@ import { db } from '../config/firebase';
 interface AuthComponentProps {
   user: User | null;
   onAuthStateChange: (user: User | null) => void;
+  onLogout: () => Promise<void>;
 }
 
 export const AuthComponent: React.FC<AuthComponentProps> = ({ 
   user, 
-  onAuthStateChange 
+  onAuthStateChange,
+  onLogout
 }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [password, setPassword] = useState('');
@@ -138,16 +140,6 @@ export const AuthComponent: React.FC<AuthComponentProps> = ({
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      onAuthStateChange(null);
-      toast.success('ログアウトしました');
-    } catch (error: any) {
-      toast.error(`ログアウトに失敗しました: ${error.message}`);
-    }
-  };
-
   if (user) {
     const displayName = user.displayName || 'ユーザー';
     return (
@@ -165,7 +157,7 @@ export const AuthComponent: React.FC<AuthComponentProps> = ({
             </div>
           </div>
           <button
-            onClick={handleLogout}
+            onClick={onLogout}
             className="flex items-center px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <LogOut size={16} className="mr-1" />

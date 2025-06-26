@@ -16,9 +16,9 @@ import { Footer } from './components/Footer';
 import { SubPage } from './components/SubPages';
 import { AccountDeletionSection } from './components/AccountDeletionSection';
 
-import { onAuthStateChanged, User, signOut } from 'firebase/auth';
+import { onAuthStateChanged, User, signOut, deleteUser } from 'firebase/auth';
 import { auth } from './config/firebase';
-import { firestoreService } from './services/firestoreService';
+import { FirestoreService, firestoreService } from './services/firestoreService';
 import { getPreviousWeek, getNextWeek, formatDate } from './utils/dateUtils';
 import toast, { Toaster } from 'react-hot-toast';
 import { 
@@ -218,6 +218,8 @@ function App() {
         setError(null);
         setShowFirstLoginHelp(false);
         setShowTutorial(false);
+        setCurrentPage('main');
+        setCurrentTab('calendar');
         
         // 購読の解除
         unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
@@ -229,7 +231,7 @@ function App() {
       unsubscribeAuth();
       unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
     };
-  }, [isFirstTimeUser]); // isFirstTimeUserを依存配列に追加
+  }, []); // isFirstTimeUserへの依存を削除
 
   const handlePreviousWeek = () => {
     setCurrentDate(getPreviousWeek(currentDate));
@@ -314,11 +316,43 @@ function App() {
   };
 
   const handleLogout = async () => {
+    console.log('ログアウト処理開始: リスナーを解除します');
+    unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
+    setUnsubscribeFunctions([]);
     try {
       await signOut(auth);
+      // onAuthStateChangedが残りのクリーンアップを処理します
       toast.success('ログアウトしました');
     } catch (error: any) {
       toast.error(`ログアウトに失敗しました: ${error.message}`);
+    }
+  };
+
+  const handleAccountDeletion = async (password: string): Promise<void> => {
+    if (!user?.displayName) {
+      throw new Error('ユーザー情報が見つかりません。');
+    }
+
+    const success = await firestoreService.deleteFirestoreUserData(user.displayName, password);
+
+    if (success) {
+      console.log('Firestoreデータの削除に成功。リスナーを解除します。');
+      unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
+      setUnsubscribeFunctions([]);
+      
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        try {
+          await deleteUser(currentUser);
+          toast.success('アカウントが正常に削除されました。');
+          // onAuthStateChangedが残りの処理を担当します
+        } catch (error) {
+          console.error("Authユーザーの削除に失敗:", error);
+          toast.error('アカウントの最終処理に失敗しました。再度ログインしてお試しください。');
+        }
+      }
+    } else {
+      throw new Error('パスワードが正しくないか、アカウントデータの削除に失敗しました。');
     }
   };
 
@@ -390,7 +424,7 @@ function App() {
         </header>
 
         <main className="container mx-auto p-4">
-          <AuthComponent user={user} onAuthStateChange={handleAuthChange} />
+          <AuthComponent user={user} onAuthStateChange={handleAuthChange} onLogout={handleLogout} />
           
           {authLoading ? (
             <div className="text-center p-8">
@@ -478,7 +512,7 @@ function App() {
         </main>
       </div>
 
-      <AccountDeletionSection user={user} onAuthStateChange={handleAuthChange} />
+      <AccountDeletionSection user={user} onDeleteAccount={handleAccountDeletion} />
       <Footer onPageChange={handlePageChange} />
 
       {showNoteModal && selectedDateForNote && (
